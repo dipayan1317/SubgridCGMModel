@@ -1,29 +1,33 @@
 import numpy as np
-import struct
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
 file_path = "mocks/KH.hydro_w.00000.bin"
+
 header_offset = 4257
-variable_size = 4
-shape = (512, 512)
+variables = ['dens', 'velx', 'vely', 'velz', 'eint', 's_00']
+num_vars = len(variables)
+dtype = np.float32
+shape = (512, 512)  
+
+num_elements_per_var = shape[0] * shape[1]
+expected_total_elements = num_elements_per_var * num_vars
 
 with open(file_path, 'rb') as f:
     f.seek(header_offset)
-    raw_data = np.fromfile(f, dtype=np.float32)
-    
-    expected_size = np.prod(shape) * 6
-    if raw_data.size != expected_size:
-        raise ValueError(f"Data size mismatch: expected {expected_size} elements, but found {raw_data.size}")
-    
-    high_res_rho = raw_data[0:shape[0]*shape[1]].reshape(shape)
-    high_res_velx = raw_data[shape[0]*shape[1]:2*shape[0]*shape[1]].reshape(shape)
-    high_res_vely = raw_data[2*shape[0]*shape[1]:3*shape[0]*shape[1]].reshape(shape)
-    high_res_velz = raw_data[3*shape[0]*shape[1]:4*shape[0]*shape[1]].reshape(shape)
-    high_res_eint = raw_data[4*shape[0]*shape[1]:5*shape[0]*shape[1]].reshape(shape)
-    high_res_s_00 = raw_data[5*shape[0]*shape[1]:6*shape[0]*shape[1]].reshape(shape)
+    data = np.fromfile(f, dtype=dtype)
 
-plt.imshow(high_res_rho, cmap='inferno', norm=LogNorm())
+if data.size != expected_total_elements:
+    raise ValueError(f"Data size mismatch: expected {expected_total_elements}, got {data.size}")
+
+data_arrays = {}
+for i, var in enumerate(variables):
+    start = i * num_elements_per_var
+    end = (i + 1) * num_elements_per_var
+    data_arrays[var] = data[start:end].reshape(shape)
+
+plt.imshow(data_arrays['dens'], cmap='inferno', norm=LogNorm())
 plt.colorbar(label="Density")
 plt.title("Density (dens)")
 plt.savefig("mocks/bin_sim_density.jpg", dpi=500)
+plt.clf()
