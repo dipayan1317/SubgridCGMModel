@@ -9,8 +9,8 @@ from matplotlib.colors import LogNorm
 
 df = pd.read_csv("mocks/1Darray_0.csv")
 shape = (256, 512)
-high_res_rho = df['dens'].to_numpy().reshape(shape)
-high_res_temp = df['Temperature'].to_numpy().reshape(shape)
+high_res_rho = df['dens'].to_numpy().reshape(shape)[::-1, ::-1]
+high_res_temp = df['Temperature'].to_numpy().reshape(shape)[::-1, ::-1]
 
 sim_data = simulation_data()
 sim_data.rho = high_res_rho
@@ -19,7 +19,7 @@ cg_sim_rho = sim_data.coarse_grain(sim_data.rho, 16)
 cg_sim_temp = sim_data.coarse_grain(sim_data.temp, 16)
 
 norm = LogNorm(vmin=1e-3, vmax=1e-1)
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 im0 = axes[0].imshow(high_res_rho, cmap='viridis', norm=norm)
 axes[0].set_title(r"High Resolution (256 $\times$ 512) Density")
 axes[0].set_xticks([])
@@ -33,7 +33,7 @@ plt.savefig("mocks/sim0_density.jpg", dpi=500)
 plt.close()
 
 norm = LogNorm(vmin=1e4, vmax=1e6)
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 im0 = axes[0].imshow(high_res_temp, cmap='viridis', norm=norm)
 axes[0].set_title(r"High Resolution (256 $\times$ 512) Temperature")
 axes[0].set_xticks([])
@@ -56,7 +56,7 @@ plt.savefig("mocks/fmcl_sim0.jpg", dpi = 500)
 plt.close()
 
 hist_data = fmcl_data.flatten()
-bins = np.linspace(0, 1, 51)
+bins = np.linspace(0, 1, 101)
 plt.hist(hist_data, bins=bins, histtype='step', color='black')
 plt.xlabel(r'$f_{m}^{cl}$')
 plt.ylabel(r'Number of pixels')

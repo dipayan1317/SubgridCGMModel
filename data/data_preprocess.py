@@ -19,7 +19,7 @@ class simulation_data():
         self.ps: np.ndarray = None
 
     def input_data(self: "simulation_data", filepath: str) -> None:
-        
+
         os.chdir(filepath)
         # self.rho = np.loadtxt(filepath/"rho.txt")
         # self.temp = np.loadtxt(filepath/"temp.txt")     
@@ -37,6 +37,6 @@ class simulation_data():
         fmcl = fc / (fc + fh)
         return fmcl
 
-    def calc_deriv(self: "simulation_data", quan: np.ndarray) -> np.ndarray:
-        pass
+    
+
     
