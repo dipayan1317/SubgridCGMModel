@@ -3,6 +3,7 @@ import os
 import skimage.measure
 import matplotlib.pyplot as plt
 import bin_convert
+from tqdm import tqdm
 
 class simulation_data():
 
@@ -11,7 +12,7 @@ class simulation_data():
     total_time: float = 1 # Myr
     total_length: float = 10 # pc
     total_width: float = 10 # pc
-    resolution: tuple = (128, 128) 
+    resolution: tuple = (1024, 1024) 
 
     def __init__(self: "simulation_data") -> None:
 
@@ -78,7 +79,7 @@ class simulation_data():
         cg_uy = np.zeros_like(fmcl)
         source_term = np.zeros_like(fmcl)
 
-        for i in range(self.rho.shape[0]):
+        for i in tqdm(range(self.rho.shape[0]), desc="Calculating source term"):
 
             fmcl[i] = self.calc_fmcl(self.rho[i], self.temp[i])
             cg_rho[i] = self.coarse_grain(self.rho[i])
@@ -89,21 +90,26 @@ class simulation_data():
             term2 = np.zeros_like(term1)
 
             if i == 0:
+                fmcl[i+1] = self.calc_fmcl(self.rho[i+1], self.temp[i+1])
+                cg_rho[i+1] = self.coarse_grain(self.rho[i+1])
                 term1 = (fmcl[i+1] * cg_rho[i+1] - fmcl[i] * cg_rho[i]) / (self.total_time / self.rho.shape[0])
             if i == self.rho.shape[0] - 1:
                 term1 = (fmcl[i] * cg_rho[i] - fmcl[i-1] * cg_rho[i-1]) / (self.total_time / self.rho.shape[0])
             else:
+                fmcl[i+1] = self.calc_fmcl(self.rho[i+1], self.temp[i+1])
+                cg_rho[i+1] = self.coarse_grain(self.rho[i+1])
                 term1 = (fmcl[i+1] * cg_rho[i+1] - fmcl[i-1] * cg_rho[i-1]) / (2 * self.total_time / self.rho.shape[0])
 
             dx = self.total_length / self.rho.shape[1]
             dy = self.total_width / self.rho.shape[2]
-            term2 = cg_ux[i] * np.gradient(fmcl[i] * cg_rho[i], dx, dy)[0] + cg_uy[i] * np.gradient(fmcl[i] * cg_rho[i], dx, dy)[1] \
-                + cg_rho[i] * fmcl[i] * (np.gradient(cg_ux[i], dx, dy)[0] + np.gradient(cg_uy[i], dx, dy)[1])
+            term2 = cg_ux[i] * np.gradient(fmcl[i] * cg_rho[i], dy, dx)[1] + cg_uy[i] * np.gradient(fmcl[i] * cg_rho[i], dy, dx)[0] \
+                + cg_rho[i] * fmcl[i] * (np.gradient(cg_ux[i], dy, dx)[1] + np.gradient(cg_uy[i], dy, dx)[0])
             
             source_term[i] = term1 + term2
 
         return source_term
-
+    
+    
     
 
     

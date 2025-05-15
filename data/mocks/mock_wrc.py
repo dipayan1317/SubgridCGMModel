@@ -8,16 +8,18 @@ import data_preprocess
 from data_preprocess import simulation_data
 from matplotlib.colors import LogNorm
 import matplotlib.animation as animation
+from tqdm import tqdm
 
-file_path = "/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/128_128_prateek/bin"
+file_path = "/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/1024_1024_prateek/bin"
 
 sim_data = simulation_data()
 sim_data.input_data(file_path)
+print("Input data loaded")
 
 high_res_rho = sim_data.rho
 cg_rho = np.zeros((high_res_rho.shape[0], high_res_rho.shape[1] // sim_data.down_sample, high_res_rho.shape[2] // sim_data.down_sample))
 fmcl_data = np.zeros((sim_data.rho.shape[0], sim_data.rho.shape[1] // sim_data.down_sample, sim_data.rho.shape[2] // sim_data.down_sample))
-for i in range(high_res_rho.shape[0]):
+for i in tqdm(range(high_res_rho.shape[0]), desc = "Coarse Graining"):
     cg_rho[i] = sim_data.coarse_grain(high_res_rho[i])
     fmcl_data[i] = sim_data.calc_fmcl(sim_data.rho[i], sim_data.temp[i])
 source_term = sim_data.calc_source_term()
@@ -32,7 +34,7 @@ im2 = axs[0, 1].imshow(cg_rho[0], origin='lower', cmap='plasma', norm=LogNorm())
 axs[0, 1].set_title(r'CG ($16 \times 16$) Density')
 plt.colorbar(im2, ax=axs[0, 1], fraction=0.046, pad=0.04)
 
-im3 = axs[1, 0].imshow(source_term[0], origin='lower', cmap='viridis')
+im3 = axs[1, 0].imshow(source_term[0], origin='lower', cmap='viridis', vmin = -1, vmax = 1)
 axs[1, 0].set_title('Source Term')
 plt.colorbar(im3, ax=axs[1, 0], fraction=0.046, pad=0.04)
 
@@ -54,7 +56,7 @@ ani.save("mocks/wrc_evolution.mp4", writer='ffmpeg')
 plt.close()
 
 hist_data = sim_data.fmcl_hist()
-plt.hist(hist_data, bins=100, histtype='step', color='black')
+plt.hist(hist_data, bins=10, histtype='step', color='black')
 plt.xlabel(r'$f_{m}^{cl}$')
 plt.ylabel('Counts')
 plt.yscale('log')
