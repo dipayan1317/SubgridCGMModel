@@ -1,3 +1,4 @@
 data/files/
+feedforward_nn/data_saves/
 **/__pycache__/
 **/*.py[cod]

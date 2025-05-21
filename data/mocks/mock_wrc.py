@@ -12,14 +12,22 @@ from matplotlib.colors import LogNorm
 import matplotlib.animation as animation
 from tqdm import tqdm
 
-resolution = (1024, 1024)
+resolution = (128, 128)
 downsample = 8
 file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
+save_path = f"mocks/wrc/{resolution}_{downsample}/"
+os.makedirs(save_path, exist_ok=True)
 
 sim_data = simulation_data()
 sim_data.resolution = resolution
 sim_data.down_sample = downsample
-sim_data.input_data(file_path)
+sim_data.rho = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/rho.npy")
+sim_data.temp = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/temp.npy")
+sim_data.pressure = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/pressure.npy")
+sim_data.ux = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/ux.npy")
+sim_data.uy = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/uy.npy")
+sim_data.eint = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/eint.npy")
+sim_data.ps = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/ps.npy")
 print("Input data loaded")
 
 high_res_rho = sim_data.rho
@@ -31,15 +39,20 @@ for i in tqdm(range(high_res_rho.shape[0]), desc = "Coarse Graining"):
 source_term = sim_data.calc_source_term()   
 source_term_pred = np.zeros_like(source_term)
 
-if os.path.exists(f"mocks/wrc_preds_{resolution}_{downsample}.npy"):
-    source_term_pred = np.load(f"mocks/wrc_preds_{resolution}_{downsample}.npy")
-    print("Predictions loaded")
-else:
-    for i in tqdm(range(source_term.shape[0]), desc = "Predicting source term"):
-        source_term_pred[i] = snapshot_pred(sim_data.rho[i], sim_data.temp[i], sim_data.pressure[i], \
-                                            sim_data.ux[i], sim_data.uy[i], sim_data.eint[i], \
-                                            downsample, (sim_data.resolution[0], sim_data.resolution[1]))
-    np.save("mocks/wrc_preds.npy", source_term_pred)
+# if os.path.exists(save_path + "preds.npy"):
+#     source_term_pred = np.load(save_path + "preds.npy")
+#     print("Predictions loaded")
+# else:
+#     for i in tqdm(range(source_term.shape[0]), desc = "Predicting source term"):
+#         source_term_pred[i] = snapshot_pred(sim_data.rho[i], sim_data.temp[i], sim_data.pressure[i], \
+#                                             sim_data.ux[i], sim_data.uy[i], sim_data.eint[i], \
+#                                             downsample, (sim_data.resolution[0], sim_data.resolution[1]))
+#     np.save(save_path + "preds.npy", source_term_pred)
+
+for i in tqdm(range(source_term.shape[0]), desc = "Predicting source term"):
+    source_term_pred[i] = snapshot_pred(sim_data.rho[i], sim_data.temp[i], sim_data.pressure[i], \
+                                        sim_data.ux[i], sim_data.uy[i], sim_data.eint[i], \
+                                        downsample, (sim_data.resolution[0], sim_data.resolution[1]))
 residuals = source_term - source_term_pred
 
 fig, axs = plt.subplots(1, 3, figsize=(15, 5))
@@ -65,8 +78,9 @@ def update_source(frame):
     return [im_src, im_pred, im_res]
 
 ani_source = animation.FuncAnimation(fig, update_source, frames=source_term.shape[0], interval=100, blit=True)
-ani_source.save("mocks/wrc_source_term_evolution.mp4", writer='ffmpeg')
+ani_source.save(save_path + "source_term_evolution.mp4", writer='ffmpeg')
 plt.close()
+print("Source term animation saved")
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 10))
 
@@ -96,8 +110,9 @@ def update_all(frame):
     return [im1, im2, im3, im4]
 
 ani = animation.FuncAnimation(fig, update_all, frames=high_res_rho.shape[0], interval=100, blit=True)
-ani.save("mocks/wrc_evolution.mp4", writer='ffmpeg')
+ani.save(save_path + "all_evolution.mp4", writer='ffmpeg')
 plt.close()
+print("All evolution animation saved")
 
 hist_data = sim_data.fmcl_hist()
 plt.hist(hist_data, bins=10, histtype='step', color='black')
@@ -105,5 +120,6 @@ plt.xlabel(r'$f_{m}^{cl}$')
 plt.ylabel('Counts')
 plt.yscale('log')
 plt.title(r"Histogram of Cold gas Mass fraction")
-plt.savefig("mocks/wrc_histogram.jpg", dpi=500)
+plt.savefig(save_path + "fmcl_hist.jpg", dpi=500)
 plt.close()
+print("Histogram saved")

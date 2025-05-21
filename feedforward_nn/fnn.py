@@ -12,13 +12,45 @@ from data_preprocess import simulation_data
 np.random.seed(10)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+resolution = (128, 128)
+downsample = 8
+input_size = 48
+hidden_size1 = 256
+hidden_size2 = 128
+hidden_size3 = 64
+output_size = 1
+num_epochs = 1000
+print_every = 10
+batch_size = (resolution[0] // downsample) * (resolution[1] // downsample) // 2
+learning_rate = 5e-4
+weight_decay = 1e-4
+dropout_rate = 0.4
+
 def nn_data(filepath: str, resolution: tuple, downsample: int) -> tuple:
     """ A function to load the data and return the inputs and outputs for the neural network."""
     
     sim_data = simulation_data()
     sim_data.down_sample = downsample
     sim_data.resolution = resolution
-    sim_data.input_data(filepath)
+
+    if os.path.exists(f"data_saves/{resolution}_{downsample}"):
+        sim_data.rho = np.load(f"data_saves/{resolution}_{downsample}/rho.npy")
+        sim_data.temp = np.load(f"data_saves/{resolution}_{downsample}/temp.npy")
+        sim_data.pressure = np.load(f"data_saves/{resolution}_{downsample}/pressure.npy")
+        sim_data.ux = np.load(f"data_saves/{resolution}_{downsample}/ux.npy")
+        sim_data.uy = np.load(f"data_saves/{resolution}_{downsample}/uy.npy")
+        sim_data.eint = np.load(f"data_saves/{resolution}_{downsample}/eint.npy")
+        sim_data.ps = np.load(f"data_saves/{resolution}_{downsample}/ps.npy")
+    else:
+        sim_data.input_data(filepath)
+        os.mkdir(f"data_saves/{resolution}_{downsample}")
+        np.save(f"data_saves/{resolution}_{downsample}/rho.npy", sim_data.rho)
+        np.save(f"data_saves/{resolution}_{downsample}/temp.npy", sim_data.temp)
+        np.save(f"data_saves/{resolution}_{downsample}/pressure.npy", sim_data.pressure)
+        np.save(f"data_saves/{resolution}_{downsample}/ux.npy", sim_data.ux)
+        np.save(f"data_saves/{resolution}_{downsample}/uy.npy", sim_data.uy)
+        np.save(f"data_saves/{resolution}_{downsample}/eint.npy", sim_data.eint)
+        np.save(f"data_saves/{resolution}_{downsample}/ps.npy", sim_data.ps)
     print("Input data loaded")
     
     shape = (sim_data.rho.shape[0], sim_data.rho.shape[1] // sim_data.down_sample, sim_data.rho.shape[2] // sim_data.down_sample)
@@ -61,7 +93,7 @@ def nn_data(filepath: str, resolution: tuple, downsample: int) -> tuple:
 
     fmcl_vals = cg_flat['cg_fmcl']
     n_bins = 10
-    bins = np.linspace(0, 1, n_bins + 1)
+    bins = np.linspace(0, 1, n_bins + 1) ** (1 / 2)
     bin_indices = np.digitize(fmcl_vals, bins) - 1
     binned_indices = [np.where(bin_indices == i)[0] for i in range(n_bins)]
     n_min = min(len(indices) for indices in binned_indices if len(indices) > 0)
@@ -109,23 +141,21 @@ def nn_data(filepath: str, resolution: tuple, downsample: int) -> tuple:
     
     return input_tensor, output_tensor
 
-def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: np.ndarray, uy: np.ndarray, eint: np.ndarray, downsample: int, extent: np.ndarray) -> tuple:
+def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: np.ndarray, uy: np.ndarray, eint: np.ndarray, downsample: int, resolution: np.ndarray) -> tuple:
     """ A function to predict the source term for a given snapshot using the trained model."""
 
     sim_data = simulation_data()
     sim_data.down_sample = downsample
-    sim_data.resolution = (rho.shape[0], rho.shape[1])
-    sim_data.total_length = extent[0]
-    sim_data.total_width = extent[1]
+    sim_data.resolution = resolution
 
-    shape = (rho.shape[0] // downsample, rho.shape[1] // downsample)
+    shape = (resolution[0] // downsample, resolution[1] // downsample)
     fields = ['rho', 'temp', 'pressure', 'ux', 'uy', 'eint', 'ps', 'fmcl']
     cg = {f'cg_{field}': np.zeros(shape) for field in fields}
     grad = {f'grad_{field}_{axis}': np.zeros(shape) for field in fields for axis in ['x', 'y']}
     hessian = {f'hessian_{field}_{axis}': np.zeros(shape) for field in fields for axis in ['xx', 'xy', 'yy']}
 
-    dx = sim_data.total_length / (rho.shape[0] // downsample)
-    dy = sim_data.total_width / (rho.shape[1] // downsample)
+    dx = sim_data.total_length / (resolution[0] // downsample)
+    dy = sim_data.total_width / (resolution[1] // downsample)
 
     for field in fields:
         if field in ['rho', 'temp', 'pressure', 'ux', 'uy', 'eint']:
@@ -172,19 +202,6 @@ def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: n
         pred = pred.reshape(shape)
 
     return pred
-
-# Hyper-parameters
-input_size = 48
-hidden_size1 = 256
-hidden_size2 = 128
-hidden_size3 = 64
-output_size = 1
-num_epochs = 1000
-print_every = 10
-batch_size = 512
-learning_rate = 5e-4
-weight_decay = 1e-4
-dropout_rate = 0.4
 
 class feedforwardNN(nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim1, hidden_dim2, hidden_dim3):
@@ -236,8 +253,6 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(fnn_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     # Load the data
-    resolution = (1024, 1024)
-    downsample = 8
     file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
     fnn_data = nn_data(file_path, resolution, downsample)
     input_tensor, output_tensor = fnn_data
@@ -360,8 +375,13 @@ if __name__ == "__main__":
         test_preds = torch.cat(test_preds)
         test_targets = torch.cat(test_targets)
 
-        # tp = test_preds.detach().cpu().numpy()
-        # tt = test_targets.detach().cpu().numpy()
+        # output_mean = np.load(f"model_saves/fnn_{resolution}_{downsample}_output_mean.npy")
+        # output_std = np.load(f"model_saves/fnn_{resolution}_{downsample}_output_std.npy")
+        # tp = (test_preds.detach().cpu().numpy())* output_std + output_mean
+        # tt = (test_targets.detach().cpu().numpy())* output_std + output_mean
+        # for i in range(tp.shape[0]):
+        #     print("Target:", tt[i], "Predicted:", tp[i])
+        # print(len(tp[tp < 0]), len(tp[tp > 0]), len(tt[tt < 0]), len(tt[tt > 0]))
         # plt.plot(range(tp.shape[0]), tp, label='Predicted', color='g', lw=0.1)
         # plt.plot(range(tt.shape[0]), tt, label='Target', color='b', lw=0.1)
         # plt.xlabel('Sample')
