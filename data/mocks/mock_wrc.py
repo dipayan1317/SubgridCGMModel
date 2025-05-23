@@ -12,7 +12,7 @@ from matplotlib.colors import LogNorm
 import matplotlib.animation as animation
 from tqdm import tqdm
 
-resolution = (128, 128)
+resolution = (256, 256)
 downsample = 8
 file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
 save_path = f"mocks/wrc/{resolution}_{downsample}/"
@@ -36,6 +36,54 @@ fmcl_data = np.zeros((sim_data.rho.shape[0], sim_data.rho.shape[1] // sim_data.d
 for i in tqdm(range(high_res_rho.shape[0]), desc = "Coarse Graining"):
     cg_rho[i] = sim_data.coarse_grain(high_res_rho[i])
     fmcl_data[i] = sim_data.calc_fmcl(sim_data.rho[i], sim_data.temp[i])
+
+# Plot the final high res rho and cg rho 
+fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+plt.subplots_adjust(wspace=0.5)
+extent_hr = [-5, 5, -5, 5]
+extent_cg = [-5, 5, -5, 5]
+axs[0].set_xlabel('x (pc)')
+axs[0].set_ylabel('y (pc)')
+axs[1].set_xlabel('x (pc)')
+axs[1].set_ylabel('y (pc)')
+im1 = axs[0].imshow(high_res_rho[-1], origin='lower', cmap='plasma', norm=LogNorm(), extent=extent_hr)
+axs[0].set_title(rf'HR (${resolution[0]} \times {resolution[1]}$) Density')
+plt.colorbar(im1, ax=axs[0], fraction=0.046, pad=0.04, label=r'Density ($cm^{-3}$)')
+im2 = axs[1].imshow(cg_rho[-1], origin='lower', cmap='plasma', norm=LogNorm(), extent=extent_cg)
+axs[1].set_title(rf'CG (${resolution[0]//downsample} \times {resolution[1]//downsample}$) Density')
+plt.colorbar(im2, ax=axs[1], fraction=0.046, pad=0.04, label=r'Density ($cm^{-3}$)')
+plt.savefig(save_path + "high_res_vs_cg_rho.jpg", dpi=500)
+plt.close() 
+print("High res vs CG rho plot saved")
+
+# Plot the final fmcl data 
+fig, ax = plt.subplots(figsize=(6, 6))
+extent = [-5, 5, -5, 5]
+ax.set_xlabel('x (pc)')
+ax.set_ylabel('y (pc)')
+im3 = ax.imshow(fmcl_data[-1], origin='lower', cmap='plasma', extent=extent)
+ax.set_title(r'$f_{m}^{cl}$')
+plt.colorbar(im3, ax=ax, fraction=0.046, pad=0.04, label=r'$f_{m}^{cl}$')
+plt.savefig(save_path + "fmcl_data.jpg", dpi=500)
+plt.close()
+print("FMCL data plot saved")
+
+# Plot the fmcl histogram
+fmcl_hist_data = sim_data.fmcl_hist()
+n_bins = 10
+bins = np.linspace(0, 1, n_bins + 1) ** (1 / 2)
+plt.hist(fmcl_hist_data, bins=bins, color='black', histtype='step')
+min_count = np.histogram(fmcl_hist_data, bins=bins)[0].min()
+plt.axhline(min_count, color='red', linestyle='--', label=f'Min count: {min_count}')
+plt.legend()
+plt.xlabel(r'$f_{m}^{cl}$')
+plt.ylabel('Counts')
+plt.yscale('log')
+plt.title(r"Histogram of Cold gas Mass fraction")
+plt.savefig(save_path + "fmcl_hist__bins.jpg", dpi=500)
+plt.close()
+print("Cold gas mass fraction histogram saved")
+
 source_term = sim_data.calc_source_term()   
 source_term_pred = np.zeros_like(source_term)
 
@@ -54,6 +102,73 @@ for i in tqdm(range(source_term.shape[0]), desc = "Predicting source term"):
                                         sim_data.ux[i], sim_data.uy[i], sim_data.eint[i], \
                                         downsample, (sim_data.resolution[0], sim_data.resolution[1]))
 residuals = source_term - source_term_pred
+
+# Plot the source term, predicted source term and residuals for the 50th, 100th and 150th timestep
+fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+plt.subplots_adjust(wspace=0.5)
+extent = [-5, 5, -5, 5]
+axs[0].set_xlabel('x (pc)')
+axs[0].set_ylabel('y (pc)')
+axs[1].set_xlabel('x (pc)')
+axs[1].set_ylabel('y (pc)')
+axs[2].set_xlabel('x (pc)')
+axs[2].set_ylabel('y (pc)')
+im_src = axs[0].imshow(source_term[50], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[0].set_title('Source Term')
+plt.colorbar(im_src, ax=axs[0], fraction=0.046, pad=0.04)
+im_pred = axs[1].imshow(source_term_pred[50], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[1].set_title('Predicted Source Term')
+plt.colorbar(im_pred, ax=axs[1], fraction=0.046, pad=0.04)
+im_res = axs[2].imshow(residuals[50], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[2].set_title('Residuals')
+plt.colorbar(im_res, ax=axs[2], fraction=0.046, pad=0.04)
+plt.tight_layout()
+plt.savefig(save_path + f"{resolution}_source_term_50.jpg", dpi=500)
+plt.close()
+
+fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+plt.subplots_adjust(wspace=0.5)
+axs[0].set_xlabel('x (pc)')
+axs[0].set_ylabel('y (pc)')
+axs[1].set_xlabel('x (pc)')
+axs[1].set_ylabel('y (pc)')
+axs[2].set_xlabel('x (pc)')
+axs[2].set_ylabel('y (pc)')
+im_src = axs[0].imshow(source_term[100], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[0].set_title('Source Term')
+plt.colorbar(im_src, ax=axs[0], fraction=0.046, pad=0.04)
+im_pred = axs[1].imshow(source_term_pred[100], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[1].set_title('Predicted Source Term')
+plt.colorbar(im_pred, ax=axs[1], fraction=0.046, pad=0.04)
+im_res = axs[2].imshow(residuals[100], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[2].set_title('Residuals')
+plt.colorbar(im_res, ax=axs[2], fraction=0.046, pad=0.04)
+plt.tight_layout()
+plt.savefig(save_path + f"{resolution}_source_term_100.jpg", dpi=500)
+plt.close()
+
+fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+plt.subplots_adjust(wspace=0.5)
+axs[0].set_xlabel('x (pc)')
+axs[0].set_ylabel('y (pc)')
+axs[1].set_xlabel('x (pc)')
+axs[1].set_ylabel('y (pc)')
+axs[2].set_xlabel('x (pc)')
+axs[2].set_ylabel('y (pc)')
+im_src = axs[0].imshow(source_term[150], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[0].set_title('Source Term')
+plt.colorbar(im_src, ax=axs[0], fraction=0.046, pad=0.04)
+im_pred = axs[1].imshow(source_term_pred[150], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[1].set_title('Predicted Source Term')
+plt.colorbar(im_pred, ax=axs[1], fraction=0.046, pad=0.04)
+im_res = axs[2].imshow(residuals[150], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[2].set_title('Residuals')
+plt.colorbar(im_res, ax=axs[2], fraction=0.046, pad=0.04)
+plt.tight_layout()
+plt.savefig(save_path + f"{resolution}_source_term_150.jpg", dpi=500)
+plt.close()
+
+print("Source term, predicted source term and residuals plots saved")
 
 fig, axs = plt.subplots(1, 3, figsize=(15, 5))
 
