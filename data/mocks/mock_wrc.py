@@ -7,7 +7,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 import data_preprocess
 from data_preprocess import simulation_data
-from feedforward_nn.fnn import snapshot_pred, feedforwardNN
+from feedforward_nn.fnn import snapshot_pred as fnn_snapshot_pred
+from conv_nn.cnn import snapshot_pred as conv_snapshot_pred
 from matplotlib.colors import LogNorm
 import matplotlib.animation as animation
 from tqdm import tqdm
@@ -85,23 +86,16 @@ plt.close()
 print("Cold gas mass fraction histogram saved")
 
 source_term = sim_data.calc_source_term()   
-source_term_pred = np.zeros_like(source_term)
-
-# if os.path.exists(save_path + "preds.npy"):
-#     source_term_pred = np.load(save_path + "preds.npy")
-#     print("Predictions loaded")
-# else:
-#     for i in tqdm(range(source_term.shape[0]), desc = "Predicting source term"):
-#         source_term_pred[i] = snapshot_pred(sim_data.rho[i], sim_data.temp[i], sim_data.pressure[i], \
-#                                             sim_data.ux[i], sim_data.uy[i], sim_data.eint[i], \
-#                                             downsample, (sim_data.resolution[0], sim_data.resolution[1]))
-#     np.save(save_path + "preds.npy", source_term_pred)
+source_term_pred_fnn = np.zeros_like(source_term)
+source_term_pred_cnn = np.zeros_like(source_term)
 
 for i in tqdm(range(source_term.shape[0]), desc = "Predicting source term"):
-    source_term_pred[i] = snapshot_pred(sim_data.rho[i], sim_data.temp[i], sim_data.pressure[i], \
-                                        sim_data.ux[i], sim_data.uy[i], sim_data.eint[i], \
+    source_term_pred_fnn[i] = fnn_snapshot_pred(sim_data.rho[i], sim_data.temp[i], sim_data.pressure[i], \
+                                        sim_data.ux[i], sim_data.uy[i], sim_data.eint[i], sim_data.ps[i], \
                                         downsample, (sim_data.resolution[0], sim_data.resolution[1]))
-residuals = source_term - source_term_pred
+    source_term_pred_cnn[i] = conv_snapshot_pred(sim_data.rho[i], sim_data.temp[i], sim_data.pressure[i], \
+                                        sim_data.ux[i], sim_data.uy[i], sim_data.eint[i], sim_data.ps[i], \
+                                        downsample, (sim_data.resolution[0], sim_data.resolution[1]))
 
 # Plot the source term, predicted source term and residuals for the 50th, 100th and 150th timestep
 fig, axs = plt.subplots(1, 3, figsize=(15, 5))
@@ -116,11 +110,11 @@ axs[2].set_ylabel('y (pc)')
 im_src = axs[0].imshow(source_term[50], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
 axs[0].set_title('Source Term')
 plt.colorbar(im_src, ax=axs[0], fraction=0.046, pad=0.04)
-im_pred = axs[1].imshow(source_term_pred[50], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
-axs[1].set_title('Predicted Source Term')
+im_pred = axs[1].imshow(source_term_pred_fnn[50], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[1].set_title('Predicted Source Term (FNN)')
 plt.colorbar(im_pred, ax=axs[1], fraction=0.046, pad=0.04)
-im_res = axs[2].imshow(residuals[50], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
-axs[2].set_title('Residuals')
+im_res = axs[2].imshow(source_term_pred_cnn[50], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[2].set_title('Predicted Source Term (CNN)')
 plt.colorbar(im_res, ax=axs[2], fraction=0.046, pad=0.04)
 plt.tight_layout()
 plt.savefig(save_path + f"{resolution}_source_term_50.jpg", dpi=500)
@@ -137,11 +131,11 @@ axs[2].set_ylabel('y (pc)')
 im_src = axs[0].imshow(source_term[100], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
 axs[0].set_title('Source Term')
 plt.colorbar(im_src, ax=axs[0], fraction=0.046, pad=0.04)
-im_pred = axs[1].imshow(source_term_pred[100], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
-axs[1].set_title('Predicted Source Term')
+im_pred = axs[1].imshow(source_term_pred_fnn[100], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[1].set_title('Predicted Source Term (FNN)')
 plt.colorbar(im_pred, ax=axs[1], fraction=0.046, pad=0.04)
-im_res = axs[2].imshow(residuals[100], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
-axs[2].set_title('Residuals')
+im_res = axs[2].imshow(source_term_pred_cnn[100], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[2].set_title('Predicted Source Term (CNN)')
 plt.colorbar(im_res, ax=axs[2], fraction=0.046, pad=0.04)
 plt.tight_layout()
 plt.savefig(save_path + f"{resolution}_source_term_100.jpg", dpi=500)
@@ -158,17 +152,17 @@ axs[2].set_ylabel('y (pc)')
 im_src = axs[0].imshow(source_term[150], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
 axs[0].set_title('Source Term')
 plt.colorbar(im_src, ax=axs[0], fraction=0.046, pad=0.04)
-im_pred = axs[1].imshow(source_term_pred[150], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
-axs[1].set_title('Predicted Source Term')
+im_pred = axs[1].imshow(source_term_pred_fnn[150], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[1].set_title('Predicted Source Term (FNN)')
 plt.colorbar(im_pred, ax=axs[1], fraction=0.046, pad=0.04)
-im_res = axs[2].imshow(residuals[150], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
-axs[2].set_title('Residuals')
+im_res = axs[2].imshow(source_term_pred_cnn[150], origin='lower', cmap='coolwarm', vmin=-1, vmax=1, extent=extent)
+axs[2].set_title('Predicted Source Term (CNN)')
 plt.colorbar(im_res, ax=axs[2], fraction=0.046, pad=0.04)
 plt.tight_layout()
 plt.savefig(save_path + f"{resolution}_source_term_150.jpg", dpi=500)
 plt.close()
 
-print("Source term, predicted source term and residuals plots saved")
+print("Source term and predicted source term plots saved")
 
 fig, axs = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -176,18 +170,18 @@ im_src = axs[0].imshow(source_term[0], origin='lower', cmap='coolwarm', vmin=-1,
 axs[0].set_title('Source Term')
 plt.colorbar(im_src, ax=axs[0], fraction=0.046, pad=0.04)
 
-im_pred = axs[1].imshow(source_term_pred[0], origin='lower', cmap='coolwarm', vmin=-1, vmax=1)
-axs[1].set_title('Predicted Source Term')
+im_pred = axs[1].imshow(source_term_pred_fnn[0], origin='lower', cmap='coolwarm', vmin=-1, vmax=1)
+axs[1].set_title('Predicted Source Term (FNN)')
 plt.colorbar(im_pred, ax=axs[1], fraction=0.046, pad=0.04)
 
-im_res = axs[2].imshow(residuals[0], origin='lower', cmap='coolwarm', vmin=-1, vmax=1)
-axs[2].set_title('Residuals')
+im_res = axs[2].imshow(source_term_pred_cnn[0], origin='lower', cmap='coolwarm', vmin=-1, vmax=1)
+axs[2].set_title('Predicted Source Term (CNN)')
 plt.colorbar(im_res, ax=axs[2], fraction=0.046, pad=0.04)
 
 def update_source(frame):
     im_src.set_data(source_term[frame])
-    im_pred.set_data(source_term_pred[frame])
-    im_res.set_data(residuals[frame])
+    im_pred.set_data(source_term_pred_fnn[frame])
+    im_res.set_data(source_term_pred_cnn[frame])
     for ax in axs.flat:
         ax.set_xlabel(f'Timestep: {frame}')
     return [im_src, im_pred, im_res]

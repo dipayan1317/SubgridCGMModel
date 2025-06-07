@@ -106,31 +106,6 @@ def nn_data(filepath: str, resolution: tuple, downsample: int) -> tuple:
     hessian_balanced = {k: v[balanced_indices] for k, v in hessian_flat.items()}
     source_term_balanced = source_term_flat[balanced_indices]
 
-    # Check the evolution of the selected source terms
-    # mask = np.ones_like(source_term_flat, dtype=bool)
-    # mask[balanced_indices] = False
-    # source_term_flat[mask] = np.nan
-    # source_term_flat = source_term_flat.reshape(sim_data.rho.shape[0], 
-    #                                             sim_data.rho.shape[1] // sim_data.down_sample,
-    #                                             sim_data.rho.shape[2] // sim_data.down_sample)
-    # import matplotlib.animation as animation
-    # source_term_evolution = source_term_flat
-    # fig, ax = plt.subplots(figsize=(6, 5))
-    # cax = ax.imshow(source_term_evolution[0], cmap='coolwarm', origin='lower', vmin=np.nanmin(source_term_evolution), vmax=np.nanmax(source_term_evolution))
-    # fig.colorbar(cax)
-    # ax.set_title('Source Term Evolution')
-    # ax.set_xlabel('X')
-    # ax.set_ylabel('Y')
-    # def animate(i):
-    #     cax.set_array(source_term_evolution[i])
-    #     ax.set_title(f'Source Term Evolution - Timestep {i+1}')
-    #     return [cax]
-    # ani = animation.FuncAnimation(
-    #     fig, animate, frames=source_term_evolution.shape[0], interval=200, blit=True
-    # )
-    # ani.save('source_term_evolution.gif', writer='pillow', fps=5)
-    # plt.close(fig)
-
     del cg_flat, grad_flat, hessian_flat, source_term_flat, sim_data
 
     all_arrays = [torch.tensor(cg_balanced[k]) for k in cg_balanced] + [torch.tensor(grad_balanced[k]) for k in grad_balanced] \
@@ -141,7 +116,7 @@ def nn_data(filepath: str, resolution: tuple, downsample: int) -> tuple:
     
     return input_tensor, output_tensor
 
-def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: np.ndarray, uy: np.ndarray, eint: np.ndarray, downsample: int, resolution: np.ndarray) -> tuple:
+def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: np.ndarray, uy: np.ndarray, eint: np.ndarray, ps: np.ndarray, downsample: int, resolution: np.ndarray) -> np.ndarray:
     """ A function to predict the source term for a given snapshot using the trained model."""
 
     sim_data = simulation_data()
@@ -158,7 +133,7 @@ def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: n
     dy = sim_data.total_width / (resolution[1] // downsample)
 
     for field in fields:
-        if field in ['rho', 'temp', 'pressure', 'ux', 'uy', 'eint']:
+        if field in ['rho', 'temp', 'pressure', 'ux', 'uy', 'eint', 'ps']:
             cg[f'cg_{field}'] = sim_data.coarse_grain(locals()[field])
         elif field in ['fmcl']:
             cg[f'cg_{field}'] = sim_data.calc_fmcl(rho, temp)

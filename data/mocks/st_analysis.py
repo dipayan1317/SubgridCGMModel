@@ -13,7 +13,7 @@ import matplotlib.animation as animation
 from tqdm import tqdm
 from scipy.signal import correlate2d
 
-resolution = (256, 256)  # Resolution of the simulation
+resolution = (1024, 1024) 
 downsample = 8
 file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
 save_path = f"mocks/src/{resolution}_{downsample}/"
@@ -71,21 +71,27 @@ plt.title(rf'Source Term FFT along X for ${resolution[0]} \times {resolution[1]}
 plt.savefig(f"{save_path}/fft_x.png", dpi=300)
 plt.clf()
 
-def compute_structure_function_2d(field):
+def compute_structure_function_2d(field: np.ndarray) -> np.ndarray:
     field = field - np.mean(field)
-
     f2 = field**2
     autocorr = correlate2d(field, field, mode='full')
     norm = correlate2d(np.ones_like(field), np.ones_like(field), mode='full')
-
     sq_diff = correlate2d(f2, np.ones_like(field), mode='full') \
             + correlate2d(np.ones_like(field), f2, mode='full') \
             - 2 * autocorr
-    structure = sq_diff / norm 
+    sq_diff /= norm
+    sq_diff /= np.max(sq_diff)  
+    return sq_diff
 
-    return structure
+def compute_autocorrelation_2d(field: np.ndarray) -> np.ndarray:
+    field = field - np.mean(field)  
+    autocorr = correlate2d(field, field, mode='full')
+    norm = correlate2d(np.ones_like(field), np.ones_like(field), mode='full')
+    autocorr /= norm
+    autocorr /= np.max(autocorr)  
+    return autocorr
 
-def radial_average(structure_2d):
+def radial_average(structure_2d: np.ndarray) -> tuple:
     center = np.array(structure_2d.shape) // 2
     y, x = np.indices(structure_2d.shape)
     r = np.sqrt((x - center[1])**2 + (y - center[0])**2)
@@ -96,15 +102,94 @@ def radial_average(structure_2d):
     radial_prof = tbin / nr
     return np.arange(len(radial_prof)), radial_prof
 
+def time_autocorrelation(field: np.ndarray) -> tuple:
+    T, Nx, Ny = field.shape
+    field_demeaned = field - np.mean(field, axis=0)
+    flat_field = field_demeaned.reshape(T, -1)
+
+    autocorr = np.zeros(T)
+    for tau in tqdm(range(T), desc="Calculating Time Autocorrelation"):
+        prod = flat_field[:T - tau] * flat_field[tau:]
+        autocorr[tau] = np.mean(prod)
+
+    autocorr /= autocorr[0]
+    lags = np.arange(T)
+    return lags, autocorr
+
 plt.figure(figsize=(10, 6))
 for t_idx in tqdm(np.linspace(0, source_term.shape[0] - 1, t_idxs, dtype=int), desc="Plotting Structure Function"):
     structure_2d = compute_structure_function_2d(source_term[t_idx])
     r, radial_prof = radial_average(structure_2d)
-    plt.plot(r * 10/cg_rho.shape[1], radial_prof, color=colors[int((t_idx/source_term.shape[0])*t_idxs)], label=f'{t_idx/source_term.shape[0]:.2} Myr')
-plt.xlabel(r'$r\,(pc)$')
-plt.xlim(0.0, 1.5)
+    plt.plot(r, radial_prof, color=colors[int((t_idx/source_term.shape[0])*t_idxs)], label=f'{t_idx/source_term.shape[0]:.2} Myr')
+# plt.xlabel(r'$r\,(pc)$')
+# plt.xlim(0, 1.5)
+plt.xlabel(r'$r$ (pixels)')
+# plt.xlim(0, 10)
 plt.ylabel(r'$S(r)$')
 plt.title(rf'Structure Function for ${resolution[0]} \times {resolution[1]}$ resolution')
 plt.legend()
 plt.savefig(f"{save_path}/structure_function.png", dpi=300)
+plt.clf()
+
+plt.figure(figsize=(10, 6))
+for t_idx in tqdm(np.linspace(0, source_term.shape[0] - 1, t_idxs, dtype=int), desc="Plotting Predicted Structure Function"):
+    structure_2d_pred = compute_structure_function_2d(source_term_pred[t_idx])
+    r, radial_prof = radial_average(structure_2d_pred)
+    plt.plot(r, radial_prof, color=colors[int((t_idx/source_term.shape[0])*t_idxs)], label=f'{t_idx/source_term.shape[0]:.2} Myr')
+# plt.xlabel(r'$r\,(pc)$')
+# plt.xlim(0, 1.5)
+plt.xlabel(r'$r$ (pixels)')
+# plt.xlim(0, 10)
+plt.ylabel(r'$S(r)$')
+plt.title(rf'Predicted Structure Function for ${resolution[0]} \times {resolution[1]}$ resolution')
+plt.legend()
+plt.savefig(f"{save_path}/predicted_structure_function.png", dpi=300)
+plt.clf()
+
+plt.figure(figsize=(10, 6))
+for t_idx in tqdm(np.linspace(0, source_term.shape[0] - 1, t_idxs, dtype=int), desc="Plotting Autocorrelation"):
+    autocorr_2d = compute_autocorrelation_2d(source_term[t_idx])
+    r, radial_prof = radial_average(autocorr_2d)
+    plt.plot(r, radial_prof, color=colors[int((t_idx/source_term.shape[0])*t_idxs)], label=f'{t_idx/source_term.shape[0]:.2} Myr')
+# plt.xlabel(r'$r\,(pc)$')
+# plt.xlim(0, 1.5)
+plt.xlabel(r'$r$ (pixels)')
+plt.xlim(0, 10)
+plt.ylabel(r'$C(r)$')
+plt.title(rf'Autocorrelation for ${resolution[0]} \times {resolution[1]}$ resolution')
+plt.legend()
+plt.savefig(f"{save_path}/autocorrelation.png", dpi=300)
+plt.clf()
+
+plt.figure(figsize=(10, 6))
+for t_idx in tqdm(np.linspace(0, source_term.shape[0] - 1, t_idxs, dtype=int), desc="Plotting Predicted Autocorrelation"):
+    autocorr_2d_pred = compute_autocorrelation_2d(source_term_pred[t_idx])
+    r, radial_prof = radial_average(autocorr_2d_pred)
+    plt.plot(r, radial_prof, color=colors[int((t_idx/source_term.shape[0])*t_idxs)], label=f'{t_idx/source_term.shape[0]:.2} Myr')
+# plt.xlabel(r'$r\,(pc)$')
+# plt.xlim(0, 1.5)
+plt.xlabel(r'$r$ (pixels)')
+# plt.xlim(0, 10)
+plt.ylabel(r'$C(r)$')
+plt.title(rf'Predicted Autocorrelation for ${resolution[0]} \times {resolution[1]}$ resolution')
+plt.legend()
+plt.savefig(f"{save_path}/predicted_autocorrelation.png", dpi=300)
+plt.clf()
+
+lags, autocorr = time_autocorrelation(source_term)
+plt.figure(figsize=(10, 6))
+plt.plot(lags, autocorr, color='blue')
+plt.xlabel(r'Time Steps')
+plt.ylabel(r'$C(\tau)$')
+plt.title(rf'Time Autocorrelation for ${resolution[0]} \times {resolution[1]}$ resolution')
+plt.savefig(f"{save_path}/time_autocorrelation.png", dpi=300)
+plt.clf()
+
+lags, autocorr_pred = time_autocorrelation(source_term_pred)
+plt.figure(figsize=(10, 6))
+plt.plot(lags, autocorr_pred, color='red')
+plt.xlabel(r'Time Steps')
+plt.ylabel(r'$C(\tau)$')
+plt.title(rf'Time Autocorrelation for ${resolution[0]} \times {resolution[1]}$ resolution')
+plt.savefig(f"{save_path}/predicted_time_autocorrelation.png", dpi=300)
 plt.clf()
