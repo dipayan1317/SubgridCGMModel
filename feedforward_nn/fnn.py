@@ -12,15 +12,15 @@ from data_preprocess import simulation_data
 np.random.seed(10)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-resolution = (128, 128)
-downsample = 8
+resolution = (512, 512)
+downsample = 4
 input_size = 48
 hidden_size1 = 256
 hidden_size2 = 128
 hidden_size3 = 64
 output_size = 1
 num_epochs = 1000
-print_every = 10
+print_every = 50
 batch_size = (resolution[0] // downsample) * (resolution[1] // downsample) // 2
 learning_rate = 5e-4
 weight_decay = 1e-4
@@ -158,11 +158,14 @@ def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: n
     input_tensor = torch.stack(all_arrays, dim=1)
     input_tensor = input_tensor.type(torch.float32)
     input_mean = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_{sim_data.resolution}_{downsample}_input_mean.npy")
+    # input_mean = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_(1024, 1024)_8_input_mean.npy")
     input_std = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_{sim_data.resolution}_{downsample}_input_std.npy")
+    # input_std = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_(1024, 1024)_8_input_std.npy")
     input_tensor = (input_tensor - input_mean) / input_std
     input_tensor = input_tensor.to(device)
 
     model_path = f'/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_{sim_data.resolution}_{downsample}.pth'
+    # model_path = f'/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_(1024, 1024)_8.pth'
     global input_size, hidden_size1, hidden_size2, hidden_size3, output_size, fnn_model
     fnn_model = feedforwardNN(input_size, output_size, hidden_size1, hidden_size2, hidden_size3).to(device)
     fnn_model.load_state_dict(torch.load(model_path, map_location=device))
@@ -172,7 +175,9 @@ def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: n
         pred = fnn_model(input_tensor).squeeze()
         pred = pred.cpu().numpy()
         output_mean = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_{sim_data.resolution}_{downsample}_output_mean.npy")
+        # output_mean = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_(1024, 1024)_8_output_mean.npy")
         output_std = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_{sim_data.resolution}_{downsample}_output_std.npy")
+        # output_std = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/feedforward_nn/model_saves/fnn_(1024, 1024)_8_output_std.npy")
         pred = pred * output_std + output_mean
         pred = pred.reshape(shape)
 

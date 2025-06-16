@@ -12,14 +12,14 @@ from data_preprocess import simulation_data
 np.random.seed(10)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-resolution = (256, 256)  
+resolution = (1024, 1024)  
 downsample = 8
 in_channels = 6
 out_channels = 1
 layer_size1 = 32
 layer_size2 = 64
 layer_size3 = 128
-kernel_size = 3
+kernel_size = 11
 num_epochs = 1000
 print_every = 50
 batch_size = 32
@@ -93,25 +93,30 @@ def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: n
     input_tensor = torch.cat(input_tensors, dim=0)
     input_tensor = input_tensor.unsqueeze(0)
     input_mean = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}_input_mean.npy")
+    # input_mean = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8_input_mean.npy")
     input_std = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}_input_std.npy")
+    # input_std = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8_input_std.npy")
     input_tensor = (input_tensor - input_mean) / input_std
     input_tensor = input_tensor.to(device)
 
     model_path = f'/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}.pth'
-    global in_channels, layer_size1, layer_size2, layer_size3, out_channels
-    if resolution == (256, 256) and downsample == 8:
-        kernel_size = 3
-    elif resolution == (512, 512) and downsample == 8:
-        kernel_size = 5
-    elif resolution == (1024, 1024) and downsample == 8:
-        kernel_size = 7
+    # model_path = f'/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8.pth'
+    global in_channels, layer_size1, layer_size2, layer_size3, out_channels, kernel_size
+    # if resolution == (256, 256) and downsample == 8:
+    #     kernel_size = 3
+    # elif resolution == (512, 512) and downsample == 8:
+    #     kernel_size = 5
+    # elif resolution == (1024, 1024) and downsample == 8:
+    #     kernel_size = 7
     cnn_model = ConvNN(in_channels, layer_size1, layer_size2, layer_size3, out_channels, kernel_size).to(device)
     cnn_model.load_state_dict(torch.load(model_path, map_location=device))
     cnn_model.eval()
 
     with torch.no_grad():
         output_mean = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}_output_mean.npy"))
+        # output_mean = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8_output_mean.npy"))
         output_std = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}_output_std.npy"))
+        # output_std = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8_output_std.npy"))
         pred = cnn_model(input_tensor)  
         pred = pred * output_std + output_mean  
         source_term = pred.squeeze().cpu().numpy()  
@@ -140,7 +145,6 @@ class ConvNN(nn.Module):
             nn.ReLU(),
             nn.Dropout(dropout_rate),
         )
-
         
         self.decoder = nn.Sequential(
             nn.Conv2d(layer_size3, layer_size2, kernel_size=kernel_size, padding=padding),
@@ -153,7 +157,7 @@ class ConvNN(nn.Module):
             nn.ReLU(),
             nn.Dropout(dropout_rate),
 
-            nn.Conv2d(layer_size1, 1, kernel_size=1),  
+            nn.Conv2d(layer_size1, out_channels, kernel_size=1),  
         )
 
     def forward(self, x):

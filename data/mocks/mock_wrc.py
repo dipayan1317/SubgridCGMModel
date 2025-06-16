@@ -13,11 +13,14 @@ from matplotlib.colors import LogNorm
 import matplotlib.animation as animation
 from tqdm import tqdm
 
-resolution = (256, 256)
+resolution = (1024, 1024)  
 downsample = 8
 file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
 save_path = f"mocks/wrc/{resolution}_{downsample}/"
+kernel_save_path = f"mocks/wrc/kernel/"
 os.makedirs(save_path, exist_ok=True)
+os.makedirs(kernel_save_path, exist_ok=True)
+save_kernel = 13
 
 sim_data = simulation_data()
 sim_data.resolution = resolution
@@ -96,6 +99,9 @@ for i in tqdm(range(source_term.shape[0]), desc = "Predicting source term"):
     source_term_pred_cnn[i] = conv_snapshot_pred(sim_data.rho[i], sim_data.temp[i], sim_data.pressure[i], \
                                         sim_data.ux[i], sim_data.uy[i], sim_data.eint[i], sim_data.ps[i], \
                                         downsample, (sim_data.resolution[0], sim_data.resolution[1]))
+    
+np.save(kernel_save_path + f"{resolution}_0.npy", source_term)
+np.save(kernel_save_path + f"{resolution}_{save_kernel}.npy", source_term_pred_cnn)
 
 # Plot the source term, predicted source term and residuals for the 50th, 100th and 150th timestep
 fig, axs = plt.subplots(1, 3, figsize=(15, 5))
