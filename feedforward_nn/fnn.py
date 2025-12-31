@@ -13,7 +13,7 @@ np.random.seed(10)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 resolution = (512, 512)
-downsample = 4
+downsample = 8
 input_size = 48
 hidden_size1 = 256
 hidden_size2 = 128
@@ -33,24 +33,25 @@ def nn_data(filepath: str, resolution: tuple, downsample: int) -> tuple:
     sim_data.down_sample = downsample
     sim_data.resolution = resolution
 
-    if os.path.exists(f"data_saves/{resolution}_{downsample}"):
-        sim_data.rho = np.load(f"data_saves/{resolution}_{downsample}/rho.npy")
-        sim_data.temp = np.load(f"data_saves/{resolution}_{downsample}/temp.npy")
-        sim_data.pressure = np.load(f"data_saves/{resolution}_{downsample}/pressure.npy")
-        sim_data.ux = np.load(f"data_saves/{resolution}_{downsample}/ux.npy")
-        sim_data.uy = np.load(f"data_saves/{resolution}_{downsample}/uy.npy")
-        sim_data.eint = np.load(f"data_saves/{resolution}_{downsample}/eint.npy")
-        sim_data.ps = np.load(f"data_saves/{resolution}_{downsample}/ps.npy")
+    folder_path = f"../data/data_saves/{resolution}_{downsample}"
+    if os.path.exists(f"{folder_path}"):
+        sim_data.rho = np.load(f"{folder_path}/rho.npy")
+        sim_data.temp = np.load(f"{folder_path}/temp.npy")
+        sim_data.pressure = np.load(f"{folder_path}/pressure.npy")
+        sim_data.ux = np.load(f"{folder_path}/ux.npy")
+        sim_data.uy = np.load(f"{folder_path}/uy.npy")
+        sim_data.eint = np.load(f"{folder_path}/eint.npy")
+        sim_data.ps = np.load(f"{folder_path}/ps.npy")
     else:
-        sim_data.input_data(filepath)
-        os.mkdir(f"data_saves/{resolution}_{downsample}")
-        np.save(f"data_saves/{resolution}_{downsample}/rho.npy", sim_data.rho)
-        np.save(f"data_saves/{resolution}_{downsample}/temp.npy", sim_data.temp)
-        np.save(f"data_saves/{resolution}_{downsample}/pressure.npy", sim_data.pressure)
-        np.save(f"data_saves/{resolution}_{downsample}/ux.npy", sim_data.ux)
-        np.save(f"data_saves/{resolution}_{downsample}/uy.npy", sim_data.uy)
-        np.save(f"data_saves/{resolution}_{downsample}/eint.npy", sim_data.eint)
-        np.save(f"data_saves/{resolution}_{downsample}/ps.npy", sim_data.ps)
+        sim_data.input_data(file_path)
+        os.makedirs(folder_path, exist_ok=True)
+        np.save(f"{folder_path}/rho.npy", sim_data.rho)
+        np.save(f"{folder_path}/temp.npy", sim_data.temp)
+        np.save(f"{folder_path}/pressure.npy", sim_data.pressure)
+        np.save(f"{folder_path}/ux.npy", sim_data.ux)
+        np.save(f"{folder_path}/uy.npy", sim_data.uy)
+        np.save(f"{folder_path}/eint.npy", sim_data.eint)
+        np.save(f"{folder_path}/ps.npy", sim_data.ps)
     print("Input data loaded")
     
     shape = (sim_data.rho.shape[0], sim_data.rho.shape[1] // sim_data.down_sample, sim_data.rho.shape[2] // sim_data.down_sample)
@@ -233,7 +234,8 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(fnn_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     # Load the data
-    file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
+    # file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
+    file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/athenak/kh_build/src/{resolution[0]}_{resolution[1]}/bin"
     fnn_data = nn_data(file_path, resolution, downsample)
     input_tensor, output_tensor = fnn_data
     input_tensor = input_tensor.to(device)

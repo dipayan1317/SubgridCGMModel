@@ -13,25 +13,40 @@ from matplotlib.colors import LogNorm
 import matplotlib.animation as animation
 from tqdm import tqdm
 
-resolution = (1024, 1024)  
+resolution = (512, 512)  
 downsample = 8
-file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
-save_path = f"mocks/wrc/{resolution}_{downsample}/"
+# file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
+file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/athenak/kh_build/src/{resolution[0]}_{resolution[1]}_2/bin"
+save_path = f"mocks/wrc/{resolution}_{downsample}_2/"
 kernel_save_path = f"mocks/wrc/kernel/"
 os.makedirs(save_path, exist_ok=True)
 os.makedirs(kernel_save_path, exist_ok=True)
-save_kernel = 7
+save_kernel = 5
 
 sim_data = simulation_data()
 sim_data.resolution = resolution
 sim_data.down_sample = downsample
-sim_data.rho = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/rho.npy")
-sim_data.temp = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/temp.npy")
-sim_data.pressure = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/pressure.npy")
-sim_data.ux = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/ux.npy")
-sim_data.uy = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/uy.npy")
-sim_data.eint = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/eint.npy")
-sim_data.ps = np.load(f"../feedforward_nn/data_saves/{resolution}_{downsample}/ps.npy")
+
+folder_path = f"data_saves/{resolution}_{downsample}_2"
+if os.path.exists(f"{folder_path}"):
+    sim_data.rho = np.load(f"{folder_path}/rho.npy")
+    sim_data.temp = np.load(f"{folder_path}/temp.npy")
+    sim_data.pressure = np.load(f"{folder_path}/pressure.npy")
+    sim_data.ux = np.load(f"{folder_path}/ux.npy")
+    sim_data.uy = np.load(f"{folder_path}/uy.npy")
+    sim_data.eint = np.load(f"{folder_path}/eint.npy")
+    sim_data.ps = np.load(f"{folder_path}/ps.npy")
+else:
+    sim_data.input_data(file_path)
+    os.makedirs(folder_path, exist_ok=True)
+    np.save(f"{folder_path}/rho.npy", sim_data.rho)
+    np.save(f"{folder_path}/temp.npy", sim_data.temp)
+    np.save(f"{folder_path}/pressure.npy", sim_data.pressure)
+    np.save(f"{folder_path}/ux.npy", sim_data.ux)
+    np.save(f"{folder_path}/uy.npy", sim_data.uy)
+    np.save(f"{folder_path}/eint.npy", sim_data.eint)
+    np.save(f"{folder_path}/ps.npy", sim_data.ps)
+
 print("Input data loaded")
 
 high_res_rho = sim_data.rho
@@ -178,15 +193,15 @@ print("Source term and predicted source term plots saved")
 
 fig, axs = plt.subplots(1, 3, figsize=(15, 5))
 
-im_src = axs[0].imshow(source_term[0], origin='lower', cmap='coolwarm', vmin=-1, vmax=1)
+im_src = axs[0].imshow(source_term[0], origin='lower', cmap='coolwarm', vmin=-0.2, vmax=0.2)
 axs[0].set_title('Source Term')
 plt.colorbar(im_src, ax=axs[0], fraction=0.046, pad=0.04)
 
-im_pred_fnn = axs[1].imshow(source_term_pred_fnn[0], origin='lower', cmap='coolwarm', vmin=-1, vmax=1)
+im_pred_fnn = axs[1].imshow(source_term_pred_fnn[0], origin='lower', cmap='coolwarm', vmin=-0.2, vmax=0.2)
 axs[1].set_title('Predicted Source Term (FNN)')
 plt.colorbar(im_pred_fnn, ax=axs[1], fraction=0.046, pad=0.04)
 
-im_pred_cnn = axs[2].imshow(source_term_pred_cnn[0], origin='lower', cmap='coolwarm', vmin=-1, vmax=1)
+im_pred_cnn = axs[2].imshow(source_term_pred_cnn[0], origin='lower', cmap='coolwarm', vmin=-0.2, vmax=0.2)
 axs[2].set_title('Predicted Source Term (CNN)')
 plt.colorbar(im_pred_cnn, ax=axs[2], fraction=0.046, pad=0.04)
 

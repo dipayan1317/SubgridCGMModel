@@ -12,14 +12,14 @@ from data_preprocess import simulation_data
 np.random.seed(10)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-resolution = (1024, 1024)  
+resolution = (512, 512)  
 downsample = 8
 in_channels = 6
 out_channels = 1
 layer_size1 = 32
 layer_size2 = 64
 layer_size3 = 128
-kernel_size = 7
+kernel_size = 5
 num_epochs = 1000
 print_every = 50
 batch_size = 32
@@ -34,24 +34,25 @@ def nn_data(filepath: str, resolution: tuple, downsample: int) -> tuple:
     sim_data.down_sample = downsample
     sim_data.resolution = resolution
 
-    if os.path.exists(f"data_saves/{resolution}_{downsample}"):
-        sim_data.rho = np.load(f"data_saves/{resolution}_{downsample}/rho.npy")
-        sim_data.temp = np.load(f"data_saves/{resolution}_{downsample}/temp.npy")
-        sim_data.pressure = np.load(f"data_saves/{resolution}_{downsample}/pressure.npy")
-        sim_data.ux = np.load(f"data_saves/{resolution}_{downsample}/ux.npy")
-        sim_data.uy = np.load(f"data_saves/{resolution}_{downsample}/uy.npy")
-        sim_data.eint = np.load(f"data_saves/{resolution}_{downsample}/eint.npy")
-        sim_data.ps = np.load(f"data_saves/{resolution}_{downsample}/ps.npy")
+    folder_path = f"../data/data_saves/{resolution}_{downsample}"
+    if os.path.exists(f"{folder_path}"):
+        sim_data.rho = np.load(f"{folder_path}/rho.npy")
+        sim_data.temp = np.load(f"{folder_path}/temp.npy")
+        sim_data.pressure = np.load(f"{folder_path}/pressure.npy")
+        sim_data.ux = np.load(f"{folder_path}/ux.npy")
+        sim_data.uy = np.load(f"{folder_path}/uy.npy")
+        sim_data.eint = np.load(f"{folder_path}/eint.npy")
+        sim_data.ps = np.load(f"{folder_path}/ps.npy")
     else:
-        sim_data.input_data(filepath)
-        os.mkdir(f"data_saves/{resolution}_{downsample}")
-        np.save(f"data_saves/{resolution}_{downsample}/rho.npy", sim_data.rho)
-        np.save(f"data_saves/{resolution}_{downsample}/temp.npy", sim_data.temp)
-        np.save(f"data_saves/{resolution}_{downsample}/pressure.npy", sim_data.pressure)
-        np.save(f"data_saves/{resolution}_{downsample}/ux.npy", sim_data.ux)
-        np.save(f"data_saves/{resolution}_{downsample}/uy.npy", sim_data.uy)
-        np.save(f"data_saves/{resolution}_{downsample}/eint.npy", sim_data.eint)
-        np.save(f"data_saves/{resolution}_{downsample}/ps.npy", sim_data.ps)
+        sim_data.input_data(file_path)
+        os.makedirs(folder_path, exist_ok=True)
+        np.save(f"{folder_path}/rho.npy", sim_data.rho)
+        np.save(f"{folder_path}/temp.npy", sim_data.temp)
+        np.save(f"{folder_path}/pressure.npy", sim_data.pressure)
+        np.save(f"{folder_path}/ux.npy", sim_data.ux)
+        np.save(f"{folder_path}/uy.npy", sim_data.uy)
+        np.save(f"{folder_path}/eint.npy", sim_data.eint)
+        np.save(f"{folder_path}/ps.npy", sim_data.ps)
     print("Input data loaded")
 
     shape = (sim_data.rho.shape[0], sim_data.rho.shape[1] // sim_data.down_sample, sim_data.rho.shape[2] // sim_data.down_sample)
@@ -60,7 +61,7 @@ def nn_data(filepath: str, resolution: tuple, downsample: int) -> tuple:
 
     for i in range(sim_data.rho.shape[0]):
         for field in fields:
-            if field in ['rho', 'temp', 'pressure', 'ux', 'uy', 'eint', 'ps']:
+            if field in ['rho', 'temp', 'ux', 'uy', 'ps']:
                 cg[f'cg_{field}'][i] = sim_data.coarse_grain(getattr(sim_data, field)[i])
             elif field in ['fmcl']:
                 cg[f'cg_{field}'][i] = sim_data.calc_fmcl(sim_data.rho[i], sim_data.temp[i])
@@ -93,30 +94,25 @@ def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: n
     input_tensor = torch.cat(input_tensors, dim=0)
     input_tensor = input_tensor.unsqueeze(0)
     input_mean = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}_input_mean.npy")
-    # input_mean = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8_input_mean.npy")
     input_std = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}_input_std.npy")
-    # input_std = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8_input_std.npy")
     input_tensor = (input_tensor - input_mean) / input_std
     input_tensor = input_tensor.to(device)
 
     model_path = f'/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}.pth'
-    # model_path = f'/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8.pth'
-    global in_channels, layer_size1, layer_size2, layer_size3, out_channels, kernel_size
-    # if resolution == (256, 256) and downsample == 8:
-    #     kernel_size = 3
-    # elif resolution == (512, 512) and downsample == 8:
-    #     kernel_size = 5
-    # elif resolution == (1024, 1024) and downsample == 8:
-    #     kernel_size = 7
+    global in_channels, layer_size1, layer_size2, layer_size3, out_channels
+    if resolution == (256, 256) and downsample == 8:
+        kernel_size = 3
+    elif resolution == (512, 512) and downsample == 8:
+        kernel_size = 5
+    elif resolution == (1024, 1024) and downsample == 8:
+        kernel_size = 7
     cnn_model = ConvNN(in_channels, layer_size1, layer_size2, layer_size3, out_channels, kernel_size).to(device)
     cnn_model.load_state_dict(torch.load(model_path, map_location=device))
     cnn_model.eval()
 
     with torch.no_grad():
         output_mean = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}_output_mean.npy"))
-        # output_mean = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8_output_mean.npy"))
         output_std = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_{sim_data.resolution}_{downsample}_output_std.npy"))
-        # output_std = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/model_saves/cnn_(1024, 1024)_8_output_std.npy"))
         pred = cnn_model(input_tensor)  
         pred = pred * output_std + output_mean  
         source_term = pred.squeeze().cpu().numpy()  
@@ -173,7 +169,7 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(cnn_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     # Load the data
-    file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/data/files/Subgrid CGM Models/Without_cooling/rk2, plm/{resolution[0]}_{resolution[1]}_prateek/bin"
+    file_path = f"/data3/home/dipayandatta/Subgrid_CGM_Models/athenak/kh_build/src/{resolution[0]}_{resolution[1]}/bin"
     cnn_data = nn_data(file_path, resolution, downsample)
     input_tensor, output_tensor = cnn_data
     input_tensor = input_tensor.to(device)
@@ -200,12 +196,13 @@ if __name__ == "__main__":
     num_samples = len(dataset)
     print("Number of samples in the dataset:", num_samples)
     indices = np.random.permutation(num_samples)
-    train_end = int(0.5 * num_samples)
-    val_end = int(0.75 * num_samples)
+    train_end = int(0.33 * num_samples)
+    val_end = int(0.67 * num_samples)
+    test_end = int(1.00 * num_samples)
 
     train_indices = indices[:train_end]
     val_indices = indices[train_end:val_end]
-    test_indices = indices[val_end:]
+    test_indices = indices[val_end:test_end]
     train_dataset = Subset(dataset, train_indices)
     val_dataset = Subset(dataset, val_indices)
     test_dataset = Subset(dataset, test_indices)
