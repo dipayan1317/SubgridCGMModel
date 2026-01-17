@@ -57,8 +57,3 @@ class ConvLSTM(nn.Module):
             outputs.append(out.unsqueeze(1))
         outputs = torch.cat(outputs, dim=1)  # (batch, seq_len, output_channels, height, width)
         return outputs
-
-# Example usage:
-# model = ConvLSTM(input_channels=7, hidden_channels=32, kernel_size=3, num_layers=2, output_channels=1)
-# input_tensor = torch.randn(8, 10, 7, 64, 64)  # (batch, seq_len, 7 fields, H, W)
-# output = model(input_tensor)  # (8, 10, 1, 64, 64)

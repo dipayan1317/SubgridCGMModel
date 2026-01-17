@@ -590,8 +590,8 @@ class ResUNet(nn.Module):
 
 # Source terms for subgrid flux predcitions
 
-input_mean = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_input_mean.npy")
-input_std = np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_input_std.npy")
+input_mean = np.load(f"../../../conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_input_mean.npy")
+input_std = np.load(f"../../../conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_input_std.npy")
 
 def source_func(rho, pres, ux, uy, ps, fmcl):
         
@@ -619,10 +619,10 @@ def source_func(rho, pres, ux, uy, ps, fmcl):
     subgrid_flux = np.zeros((10, shape[0], shape[1]))
     source_term = np.zeros((5, shape[0], shape[1]))
 
-    output_mean = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_output_mean.npy"))
-    output_std = torch.from_numpy(np.load(f"/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_output_std.npy"))
+    output_mean = torch.from_numpy(np.load(f"../../../conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_output_mean.npy"))
+    output_std = torch.from_numpy(np.load(f"../../../conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_output_std.npy"))
 
-    model_path = f'/data3/home/dipayandatta/Subgrid_CGM_Models/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}.pth'
+    model_path = f'../../../conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}.pth'
     cnn_model = ConvNN(in_channels, layer_size1, layer_size2, layer_size3, out_channels, kernel_size).to(device)
     cnn_model.load_state_dict(torch.load(model_path, map_location=device))
     cnn_model.eval()
