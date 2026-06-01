@@ -108,8 +108,8 @@ def nn_data(resolution: tuple, downsample: int) -> tuple:
     sim_data.down_sample = downsample
     sim_data.resolution = resolution
 
-    folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/sc{resolution}_{downsample}"
-    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{resolution[0]}_{resolution[1]}/bin"
+    folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/lc{resolution}_{downsample}"
+    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/lc{resolution[0]}_{resolution[1]}/bin"
     if os.path.exists(f"{folder_path}"):
 
         sim_data.rho = np.load(f"{folder_path}/rho.npy")
