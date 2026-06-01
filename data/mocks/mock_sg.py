@@ -75,8 +75,8 @@ def lambda_cool(temp):
     return lam
 
 resolution = (16, 8)
-file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sd_build/src/spcp{resolution[0]}_{resolution[1]}/bin"
-save_path = f"mocks/sg/spcp{resolution}/"
+file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sd_build/src/nc{resolution[0]}_{resolution[1]}/bin"
+save_path = f"mocks/sg/nc{resolution}/"
 os.makedirs(save_path, exist_ok=True)
 
 sim_data = simulation_data()
@@ -103,7 +103,7 @@ lr_frac[temp < sim_data.T_cutoff] = 1.0
 frac = sim_data.frho
 
 lr_resolution = resolution
-lr_file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{lr_resolution[0]}_{lr_resolution[1]}/bin"
+lr_file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/nc{lr_resolution[0]}_{lr_resolution[1]}/bin"
 lr_sim_data = simulation_data()
 lr_sim_data.resolution = lr_resolution
 lr_sim_data.input_data(lr_file_path, start=501)
@@ -125,14 +125,14 @@ lr_fmcl = (lr_temp < 1e5).astype(float)
 
 hr_resolution = (512, 256)
 hr_downsample = 32
-hr_file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{hr_resolution[0]}_{hr_resolution[1]}/bin"
+hr_file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/nc{hr_resolution[0]}_{hr_resolution[1]}/bin"
 hr_sim_data = simulation_data()
 hr_sim_data.resolution = hr_resolution
 hr_sim_data.down_sample = hr_downsample
 # hr_sim_data.input_data(hr_file_path)
 # hr_rho = hr_sim_data.rho
 # hr_temp = hr_sim_data.temp
-hr_folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/sc{hr_resolution}_{hr_downsample}"
+hr_folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/nc{hr_resolution}_{hr_downsample}"
 hr_rho = np.load(f"{hr_folder_path}/rho.npy")
 hr_temp = np.load(f"{hr_folder_path}/temp.npy")
 hr_pres = np.load(f"{hr_folder_path}/pressure.npy")

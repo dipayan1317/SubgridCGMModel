@@ -23,8 +23,8 @@ batch_size = 64
 learning_rate = 1e-3
 weight_decay = 1e-3
 dropout_rate = 0.3
-total_length: float = 20 
-total_width: float = 10 
+total_length: float = 40 
+total_width: float = 20 
 gamma: float = 5.0 / 3.0
 T_edges = np.logspace(3.0, 7.0, out_channels + 1)
 T_centers = 0.5 * (T_edges[:-1] + T_edges[1:])
@@ -1017,9 +1017,18 @@ def source_func(rho, pres, ux, uy, ps, fmcl):
     for channel in range(3, 4, 1):
 
         v = source_term[channel]
-        w = np.clip((np.abs(v)-np.percentile(np.abs(v),75)) / (np.percentile(np.abs(v),90)-np.percentile(np.abs(v),75)+1e-12), 0, 1)
-        A, B = gaussian_filter(v, 0.0), gaussian_filter(v, kernel_size/3)
-        source_term[channel] = (1 - w) * A + w * B
+
+        mag = np.abs(v)
+
+        sigma_v = np.std(mag)
+        threshold = 5.0 * sigma_v
+
+        w = np.clip((mag - threshold) / (threshold + 1e-12), 0.0, 1.0)
+
+        A = gaussian_filter(v, 0.0)
+        B = gaussian_filter(v, kernel_size/3)
+
+        source_term[channel] = (1.0 - w) * A + w * B
 
     final_term = np.transpose(source_term, axes=(0, 2, 1))
     return final_term.reshape(5, -1)
