@@ -635,6 +635,18 @@ class PDFEmissivityLoss(nn.Module):
         # emissivity maps
         # --------------------------------------------------
 
+        emiss_pred = emissivity_from_pdf(
+            pred_pdf,
+            rho,
+            lambda_tensor
+        )
+
+        emiss_true = emissivity_from_pdf(
+            true_pdf,
+            rho,
+            lambda_tensor
+        )
+
         max_emiss_pred = torch.amax(
             emiss_pred,
             dim=(2,3)
@@ -695,7 +707,7 @@ if __name__ == "__main__":
     ).to(device)
 
     # criterion = nn.KLDivLoss(reduction="batchmean")
-    criterion = PDFEmissivityLoss(alpha_emiss=10.0, alpha_profile=10.0)
+    criterion = PDFEmissivityLoss(alpha_emiss=1.0, alpha_profile=10.0)
     # criterion = KLWithLeakageLoss()
     # criterion = WassersteinLoss()
 
