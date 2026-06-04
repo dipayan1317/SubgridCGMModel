@@ -88,6 +88,9 @@ def lambda_cool(temp):
         logcool = (lhd[ipps+1]*dx - lhd[ipps]*(dx - 0.04)) * 25.0
         lam[mask_mid] = 10.0**logcool
 
+    mask_off = (logt < 4.1) | (logt > 5.9)
+    lam[mask_off] = 0.0
+
     return lam
 
 lambda_vals = lambda_cool(T_centers)
@@ -100,6 +103,10 @@ log_lambda -= log_lambda.min()
 log_lambda /= (log_lambda.max() + 1e-30)
 
 lambda_weights = torch.tensor(log_lambda, dtype=torch.float32)
+lambda_tensor = torch.tensor(
+    lambda_vals,
+    dtype=torch.float32
+)
 
 def nn_data(resolution: tuple, downsample: int) -> tuple:
     """ A function to load the data and return the inputs and outputs for the Conv neural network."""
@@ -502,6 +509,38 @@ def build_gmm_pdf(
 
     return pdf
 
+def emissivity_from_pdf(
+    pdf,
+    rho,
+    lambda_tensor
+):
+    """
+    pdf : (B,bins,nx,ny)
+    rho : (B,1,nx,ny)
+
+    returns:
+        emissivity : (B,1,nx,ny)
+    """
+
+    cooling = lambda_tensor.to(pdf.device)
+
+    cooling = cooling.view(
+        1,
+        -1,
+        1,
+        1
+    )
+
+    mean_lambda = torch.sum(
+        pdf * cooling,
+        dim=1,
+        keepdim=True
+    )
+
+    emiss = rho**2 * mean_lambda
+
+    return emiss
+
 class KLWithLeakageLoss(nn.Module):
     def __init__(self, alpha=0, T0=1e6, width=0.1):
         super().__init__()
@@ -559,6 +598,86 @@ class KLWithLeakageLoss(nn.Module):
         leakage_loss = torch.mean(masked_leakage)
 
         return kl_loss + self.alpha * leakage_loss
+    
+class PDFEmissivityLoss(nn.Module):
+
+    def __init__(
+        self,
+        alpha_emiss=1.0,
+        alpha_profile=1.0
+    ):
+        super().__init__()
+
+        self.alpha_emiss = alpha_emiss
+        self.alpha_profile = alpha_profile
+
+        self.kl = nn.KLDivLoss(
+            reduction="batchmean"
+        )
+
+    def forward(
+        self,
+        pred_pdf,
+        true_pdf,
+        rho
+    ):
+
+        # --------------------------------------------------
+        # PDF loss
+        # --------------------------------------------------
+
+        pdf_loss = self.kl(
+            torch.log(pred_pdf + 1e-12),
+            true_pdf
+        )
+
+        # --------------------------------------------------
+        # emissivity maps
+        # --------------------------------------------------
+
+        emiss_pred = emissivity_from_pdf(
+            pred_pdf,
+            rho,
+            lambda_tensor
+        )
+
+        emiss_true = emissivity_from_pdf(
+            true_pdf,
+            rho,
+            lambda_tensor
+        )
+
+        emiss_loss = F.mse_loss(
+            torch.log10(emiss_pred + 1e-30),
+            torch.log10(emiss_true + 1e-30)
+        )
+
+        # --------------------------------------------------
+        # x-averaged emissivity profile
+        # --------------------------------------------------
+
+        profile_pred = torch.mean(
+            emiss_pred,
+            dim=3
+        )
+
+        profile_true = torch.mean(
+            emiss_true,
+            dim=3
+        )
+
+        profile_loss = F.mse_loss(
+            torch.log10(profile_pred + 1e-30),
+            torch.log10(profile_true + 1e-30)
+        )
+
+        total_loss = (
+            pdf_loss
+            + self.alpha_emiss * emiss_loss
+            + self.alpha_profile * profile_loss
+        )
+
+        return total_loss
         
 if __name__ == "__main__":
 
@@ -577,7 +696,8 @@ if __name__ == "__main__":
         kernel_size
     ).to(device)
 
-    criterion = nn.KLDivLoss(reduction="batchmean")
+    # criterion = nn.KLDivLoss(reduction="batchmean")
+    criterion = PDFEmissivityLoss(alpha_emiss=0.1, alpha_profile=1.0)
     # criterion = KLWithLeakageLoss()
     # criterion = WassersteinLoss()
 
@@ -649,9 +769,17 @@ if __name__ == "__main__":
                 logT_centers
             )
 
+            # loss = criterion(
+            #     torch.log(pred_pdf + 1e-12),
+            #     labels
+            # )
+
+            rho = inputs[:,0:1]
+
             loss = criterion(
-                torch.log(pred_pdf + 1e-12),
-                labels
+                pred_pdf,
+                labels,
+                rho
             )
 
             optimizer.zero_grad()
@@ -677,9 +805,17 @@ if __name__ == "__main__":
                     logT_centers
                 )
 
+                # train_loss_total += criterion(
+                #     torch.log(pred_pdf + 1e-12),
+                #     y_batch
+                # ).item()
+
+                rho = x_batch[:,0:1]
+
                 train_loss_total += criterion(
-                    torch.log(pred_pdf + 1e-12),
-                    y_batch
+                    pred_pdf,
+                    y_batch,
+                    rho
                 ).item()
 
             train_loss = train_loss_total / len(train_loader)
@@ -696,9 +832,17 @@ if __name__ == "__main__":
                     logT_centers
                 )
 
+                # val_loss_total += criterion(
+                #     torch.log(pred_pdf + 1e-12),
+                #     y_batch
+                # ).item()
+
+                rho = x_batch[:,0:1]
+
                 val_loss_total += criterion(
-                    torch.log(pred_pdf + 1e-12),
-                    y_batch
+                    pred_pdf,
+                    y_batch,
+                    rho
                 ).item()
 
             val_loss = val_loss_total / len(validation_loader)
@@ -749,9 +893,17 @@ if __name__ == "__main__":
                 logT_centers
             )
 
+            # test_loss_total += criterion(
+            #     torch.log(pred_pdf + 1e-12),
+            #     y_batch
+            # ).item()
+
+            rho = x_batch[:,0:1]
+
             test_loss_total += criterion(
-                torch.log(pred_pdf + 1e-12),
-                y_batch
+                pred_pdf,
+                y_batch,
+                rho
             ).item()
 
         test_loss = test_loss_total / len(test_loader)
