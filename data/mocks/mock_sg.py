@@ -75,8 +75,8 @@ def lambda_cool(temp):
     return lam
 
 resolution = (16, 8)
-file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sd_build/src/ldc{resolution[0]}_{resolution[1]}/bin"
-save_path = f"mocks/sg/ldc{resolution}/"
+file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sd_build/src/lsc{resolution[0]}_{resolution[1]}/bin"
+save_path = f"mocks/sg/lsc{resolution}/"
 os.makedirs(save_path, exist_ok=True)
 
 sim_data = simulation_data()
@@ -1021,119 +1021,114 @@ emis_lr = lr_rho**2 * lambda_cool(lr_temp)
 
 
 # ------------------------------------------------------------
-# Average over x
+# Average along x and time
 # ------------------------------------------------------------
 
+# shape: (time, y, x)
+
+# Average over x
 emis_hr_xavg = np.mean(emis_hr, axis=2)
 emis_sg_xavg = np.mean(emis_sg, axis=2)
 emis_lr_xavg = np.mean(emis_lr, axis=2)
+
+# Average over time
+emis_hr_mean = np.mean(emis_hr_xavg, axis=0)
+emis_hr_std  = np.std(emis_hr_xavg, axis=0)
+
+emis_sg_mean = np.mean(emis_sg_xavg, axis=0)
+emis_sg_std  = np.std(emis_sg_xavg, axis=0)
+
+emis_lr_mean = np.mean(emis_lr_xavg, axis=0)
+emis_lr_std  = np.std(emis_lr_xavg, axis=0)
+
+
+# ------------------------------------------------------------
+# y coordinates
+# ------------------------------------------------------------
 
 y_hr = np.linspace(0, sim_data.total_length, hr_rho.shape[1])
 y_sg = np.linspace(0, sim_data.total_length, rho.shape[1])
 y_lr = np.linspace(0, sim_data.total_length, lr_rho.shape[1])
 
-# ------------------------------------------------------------
-# Global averages
-# ------------------------------------------------------------
-
-global_hr = np.mean(emis_hr_xavg)
-global_sg = np.mean(emis_sg_xavg)
-global_lr = np.mean(emis_lr_xavg)
 
 # ------------------------------------------------------------
-# Time intervals
+# Integrated emissivity profiles
+# Integral over y
 # ------------------------------------------------------------
 
-intervals = [
-    (0,100),
-    (100,200),
-    (200,300),
-    (300,400),
-    (400,500)
-]
+int_hr = np.trapz(emis_hr_mean, y_hr)
+int_sg = np.trapz(emis_sg_mean, y_sg)
+int_lr = np.trapz(emis_lr_mean, y_lr)
 
-fig, axes = plt.subplots(
-    5, 1,
-    figsize=(8,18),
-    sharex=True
+
+# ------------------------------------------------------------
+# Plot
+# ------------------------------------------------------------
+
+fig, ax = plt.subplots(figsize=(7, 5))
+
+ax.set_yscale("log")
+
+# HR
+ax.plot(
+    y_hr,
+    emis_hr_mean,
+    lw=2,
+    label=rf"HR (Sig_c = {int_hr:.2e})"
 )
 
-for ax, (i0,i1) in zip(axes, intervals):
+ax.fill_between(
+    y_hr,
+    np.clip(emis_hr_mean - emis_hr_std, 1e-30, None),
+    emis_hr_mean + emis_hr_std,
+    alpha=0.25
+)
 
-    hr_mean = np.mean(emis_hr_xavg[i0:i1], axis=0)
-    sg_mean = np.mean(emis_sg_xavg[i0:i1], axis=0)
-    lr_mean = np.mean(emis_lr_xavg[i0:i1], axis=0)
+# SG
+ax.plot(
+    y_sg,
+    emis_sg_mean,
+    lw=2,
+    label=rf"SG (Sig_c = {int_sg:.2e})"
+)
 
-    hr_std = np.std(emis_hr_xavg[i0:i1], axis=0)
-    sg_std = np.std(emis_sg_xavg[i0:i1], axis=0)
-    lr_std = np.std(emis_lr_xavg[i0:i1], axis=0)
+ax.fill_between(
+    y_sg,
+    np.clip(emis_sg_mean - emis_sg_std, 1e-30, None),
+    emis_sg_mean + emis_sg_std,
+    alpha=0.25
+)
 
-    local_hr = np.mean(hr_mean)
-    local_sg = np.mean(sg_mean)
-    local_lr = np.mean(lr_mean)
+# LR
+ax.plot(
+    y_lr,
+    emis_lr_mean,
+    lw=2,
+    label=rf"LR (Sig_c = {int_lr:.2e})"
+)
 
-    ax.set_yscale("log")
+ax.fill_between(
+    y_lr,
+    np.clip(emis_lr_mean - emis_lr_std, 1e-30, None),
+    emis_lr_mean + emis_lr_std,
+    alpha=0.25
+)
 
-    ax.plot(y_hr, hr_mean, lw=2, label="HR")
-    ax.plot(y_sg, sg_mean, lw=2, label="SG")
-    ax.plot(y_lr, lr_mean, lw=2, label="LR")
+ax.set_xlabel("y")
+ax.set_ylabel(r"$\langle n^2 \Lambda(T) \rangle$")
 
-    ax.fill_between(
-        y_hr,
-        np.clip(hr_mean-hr_std,1e-30,None),
-        hr_mean+hr_std,
-        alpha=0.2
-    )
+ax.set_ylim(2e-28, 1e-24)
 
-    ax.fill_between(
-        y_sg,
-        np.clip(sg_mean-sg_std,1e-30,None),
-        sg_mean+sg_std,
-        alpha=0.2
-    )
+ax.set_title(r"Mean Emissivity Profile vs $y$")
 
-    ax.fill_between(
-        y_lr,
-        np.clip(lr_mean-lr_std,1e-30,None),
-        lr_mean+lr_std,
-        alpha=0.2
-    )
-
-    text = (
-        f"HR: local={local_hr:.2e}\n"
-        f"    global={global_hr:.2e}\n\n"
-        f"SG: local={local_sg:.2e}\n"
-        f"    global={global_sg:.2e}\n\n"
-        f"LR: local={local_lr:.2e}\n"
-        f"    global={global_lr:.2e}"
-    )
-
-    ax.text(
-        0.02,
-        0.97,
-        text,
-        transform=ax.transAxes,
-        va="top",
-        fontsize=8,
-        bbox=dict(facecolor="white", alpha=0.8)
-    )
-
-    ax.set_title(f"Snapshots {i0}-{i1-1}")
-    ax.grid(True, ls="--", alpha=0.5)
-    ax.legend()
-
-axes[-1].set_xlabel("y")
-
-for ax in axes:
-    ax.set_ylabel(r"$\langle n^2 \Lambda(T)\rangle$")
-    ax.set_ylim(2e-28,1e-24)
+ax.grid(True, ls="--", alpha=0.5)
+ax.legend()
 
 plt.tight_layout()
-plt.savefig(
-    save_path + "emissivity_profile_vs_y_intervals.png",
-    dpi=200
-)
-plt.close()
+plt.savefig(save_path + "emissivity_profile_vs_y.png", dpi=200)
+plt.close(fig)
+
+print("emissivity_profile_vs_y.png saved")
 
 # # --- data arrays (nt, ny, nx) ---
 # nt, ny_hr, nx_hr = cg_hr_rho.shape
