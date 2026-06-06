@@ -707,7 +707,7 @@ if __name__ == "__main__":
     ).to(device)
 
     # criterion = nn.KLDivLoss(reduction="batchmean")
-    criterion = PDFEmissivityLoss(alpha_emiss=1.0, alpha_profile=1.0)
+    criterion = PDFEmissivityLoss(alpha_emiss=10.0, alpha_profile=10.0)
     # criterion = KLWithLeakageLoss()
     # criterion = WassersteinLoss()
 
