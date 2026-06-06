@@ -1004,6 +1004,22 @@ plt.close(fig)
 
 print("temperature_pdfs_all_weightings.png saved")
 
+# ============================================================
+# <n^2 Lambda(T)> profile vs y
+# Averaged over x and time
+# HR uses FULL-resolution fields
+# ============================================================
+
+# ------------------------------------------------------------
+# Compute emissivity fields
+# epsilon ~ rho^2 * Lambda(T)
+# ------------------------------------------------------------
+
+emis_hr = hr_rho**2 * lambda_cool(hr_temp)
+emis_sg = rho**2    * lambda_cool(temp)
+emis_lr = lr_rho**2 * lambda_cool(lr_temp)
+
+
 # ------------------------------------------------------------
 # Average over x
 # ------------------------------------------------------------
