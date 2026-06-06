@@ -11,6 +11,6 @@
 #SBATCH --error=job.err
 
 echo "Starting CNN training..."
-python3 -u log_cnn.py
+python3 -u pdf_cnn.py
 
 echo "Job complete."
