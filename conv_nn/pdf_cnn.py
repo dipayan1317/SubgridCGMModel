@@ -534,6 +534,7 @@ if __name__ == "__main__":
 
     input_tensor = input_tensor.to(device)
     output_tensor = output_tensor.to(device)
+    rho_tensor = input_tensor[:,0:1]
 
     # Numerical stability for PDFs
     output_tensor = torch.clamp(output_tensor, min=1e-12)
@@ -552,7 +553,12 @@ if __name__ == "__main__":
 
     input_tensor_norm = (input_tensor - input_mean) / input_std
 
-    dataset = TensorDataset(input_tensor_norm, output_tensor)
+    # dataset = TensorDataset(input_tensor_norm, output_tensor)
+    dataset = TensorDataset(
+        input_tensor_norm,
+        output_tensor,
+        rho_tensor
+    )
 
     num_samples = len(dataset)
     print("Number of samples:", num_samples)
@@ -579,11 +585,12 @@ if __name__ == "__main__":
 
         cnn_model.train()
 
-        for inputs, labels in train_loader:
+        # for inputs, labels in train_loader:
+        for inputs, labels, rho in train_loader:
 
             outputs = cnn_model(inputs)
 
-            rho = inputs[:,0:1]
+            # rho = inputs[:,0:1]
 
             loss = criterion(
                 outputs,
@@ -604,11 +611,12 @@ if __name__ == "__main__":
             val_loss_total = 0
 
             # Train evaluation
-            for x_batch, y_batch in train_loader:
+            # for x_batch, y_batch in train_loader:
+            for x_batch, y_batch, rho in train_loader:
 
                 preds = cnn_model(x_batch)
 
-                rho = x_batch[:,0:1]
+                # rho = x_batch[:,0:1]
 
                 train_loss_total += criterion(
                     preds,
@@ -620,11 +628,11 @@ if __name__ == "__main__":
             train_loss = train_loss_total / len(train_loader)
 
             # Validation evaluation
-            for x_batch, y_batch in validation_loader:
+            for x_batch, y_batch, rho in validation_loader:
 
                 preds = cnn_model(x_batch)
 
-                rho = x_batch[:,0:1]
+                # rho = x_batch[:,0:1]
 
                 val_loss_total += criterion(
                     preds,
@@ -670,11 +678,11 @@ if __name__ == "__main__":
 
         test_loss_total = 0
 
-        for x_batch, y_batch in test_loader:
+        for x_batch, y_batch, rho in test_loader:
 
             preds = cnn_model(x_batch)
 
-            rho = x_batch[:,0:1]
+            # rho = x_batch[:,0:1]
 
             test_loss_total += criterion(
                 preds,

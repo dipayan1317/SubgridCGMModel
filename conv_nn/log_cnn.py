@@ -812,7 +812,7 @@ if __name__ == "__main__":
 
             # Train evaluation
             # for x_batch, y_batch in train_loader:
-            for x_batch, y_batch, rho_batch in train_loader:
+            for x_batch, y_batch, rho in train_loader:
 
                 weights, mu, sigma = cnn_model(x_batch)
 
@@ -828,7 +828,7 @@ if __name__ == "__main__":
                 #     y_batch
                 # ).item()
 
-                rho = x_batch[:,0:1]
+                # rho = x_batch[:,0:1]
 
                 train_loss_total += criterion(
                     pred_pdf,
@@ -840,7 +840,7 @@ if __name__ == "__main__":
 
             # Validation evaluation
             # for x_batch, y_batch in validation_loader:
-            for x_batch, y_batch, rho_batch in validation_loader:
+            for x_batch, y_batch, rho in validation_loader:
 
                 weights, mu, sigma = cnn_model(x_batch)
 
@@ -856,7 +856,7 @@ if __name__ == "__main__":
                 #     y_batch
                 # ).item()
 
-                rho = x_batch[:,0:1]
+                # rho = x_batch[:,0:1]
 
                 val_loss_total += criterion(
                     pred_pdf,
@@ -902,7 +902,7 @@ if __name__ == "__main__":
         test_loss_total = 0
 
         # for x_batch, y_batch in test_loader:
-        for x_batch, y_batch, rho_batch in test_loader:
+        for x_batch, y_batch, rho in test_loader:
 
             weights, mu, sigma = cnn_model(x_batch)
 
@@ -918,7 +918,7 @@ if __name__ == "__main__":
             #     y_batch
             # ).item()
 
-            rho = x_batch[:,0:1]
+            # rho = x_batch[:,0:1]
 
             test_loss_total += criterion(
                 pred_pdf,
