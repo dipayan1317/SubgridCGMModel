@@ -1,18 +1,22 @@
 Starting CNN training...
+Using device: cuda
 Training all fluxes model
 Input data loaded
 Normalizing input tensor
 Number of samples: 500
-Epoch [50/1000] Train Loss: 58.772022 | Val Loss: 62.213951
-Epoch [100/1000] Train Loss: 21.175552 | Val Loss: 27.725672
-Epoch [150/1000] Train Loss: 15.611303 | Val Loss: 24.220920
-Epoch [200/1000] Train Loss: 10.164369 | Val Loss: 21.517321
-Epoch [250/1000] Train Loss: 7.788878 | Val Loss: 21.359764
-Epoch [300/1000] Train Loss: 7.682225 | Val Loss: 24.677219
-Epoch [350/1000] Train Loss: 5.430256 | Val Loss: 21.543489
-Epoch [400/1000] Train Loss: 4.597519 | Val Loss: 22.190472
-Epoch [450/1000] Train Loss: 3.913803 | Val Loss: 21.862247
-Epoch [500/1000] Train Loss: 3.852205 | Val Loss: 23.101228
-Early stopping at epoch 500
-Test Loss: 24.614978
+Epoch [50/1000] Train Loss: 20.460912 | Val Loss: 23.006849
+Epoch [100/1000] Train Loss: 11.749724 | Val Loss: 14.600634
+Epoch [150/1000] Train Loss: 10.039435 | Val Loss: 12.287093
+Epoch [200/1000] Train Loss: 7.927223 | Val Loss: 10.083424
+Epoch [250/1000] Train Loss: 6.509327 | Val Loss: 8.977598
+Epoch [300/1000] Train Loss: 6.076558 | Val Loss: 8.503713
+Epoch [350/1000] Train Loss: 5.042793 | Val Loss: 8.020339
+Epoch [400/1000] Train Loss: 4.179998 | Val Loss: 7.116318
+Epoch [450/1000] Train Loss: 3.696155 | Val Loss: 6.697544
+Epoch [500/1000] Train Loss: 3.178132 | Val Loss: 6.072211
+Epoch [550/1000] Train Loss: 3.125858 | Val Loss: 5.736816
+Epoch [600/1000] Train Loss: 2.896052 | Val Loss: 5.794330
+Epoch [650/1000] Train Loss: 2.859586 | Val Loss: 5.584729
+Early stopping at epoch 686
+Test Loss: 5.392229
 Job complete.
