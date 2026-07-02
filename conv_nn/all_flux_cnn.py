@@ -14,23 +14,24 @@ import data_preprocess
 from data_preprocess import simulation_data
 
 np.random.seed(10)
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
+print(f"Using device: {device}")
 
-resolution = (2048, 1024)  
-downsample = 128
-in_channels = 6
+resolution = (512, 256)  
+downsample = 32
+in_channels = 5
 out_channels = 12
-layer_size1 = 64
-layer_size2 = 128
-layer_size3 = 256
-kernel_size = 11
+layer_size1 = 32
+layer_size2 = 64
+layer_size3 = 128
+kernel_size = 5
 num_epochs = 1000
 print_every = 50
-batch_size = 32
+batch_size = 64
 learning_rate = 1e-3
 weight_decay = 1e-4
-dropout_rate = 0.5
+dropout_rate = 0.3
 
 def nn_data(resolution: tuple, downsample: int) -> tuple:
     """ A function to load the data and return the inputs and outputs for the Conv neural network."""
@@ -39,8 +40,8 @@ def nn_data(resolution: tuple, downsample: int) -> tuple:
     sim_data.down_sample = downsample
     sim_data.resolution = resolution
 
-    folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/c{resolution}_128"
-    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/c{resolution[0]}_{resolution[1]}/bin"
+    folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/sc{resolution}_{downsample}"
+    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{resolution[0]}_{resolution[1]}/bin"
     if os.path.exists(f"{folder_path}"):
 
         sim_data.rho = np.load(f"{folder_path}/rho.npy")
@@ -78,15 +79,12 @@ def nn_data(resolution: tuple, downsample: int) -> tuple:
     print("Input data loaded")
 
     shape = (sim_data.rho.shape[0], sim_data.rho.shape[1] // sim_data.down_sample, sim_data.rho.shape[2] // sim_data.down_sample)
-    fields = ['rho', 'temp', 'ux', 'uy', 'ps', 'fmcl']
+    fields = ['rho', 'temp', 'ux', 'uy', 'ps']
     cg = {f'cg_{field}': np.zeros(shape) for field in fields}
 
     for i in range(sim_data.rho.shape[0]):
         for field in fields:
-            if field in ['rho', 'temp', 'ux', 'uy', 'ps']:
-                cg[f'cg_{field}'][i] = sim_data.coarse_grain(getattr(sim_data, field)[i])
-            elif field in ['fmcl']:
-                cg[f'cg_{field}'][i] = sim_data.calc_fmcl(sim_data.rho[i], sim_data.temp[i])
+            cg[f'cg_{field}'][i] = sim_data.coarse_grain(getattr(sim_data, field)[i])
     subgrid_flux = sim_data.calc_subgrid_flux()
 
     input_tensors = [torch.from_numpy(cg[f'cg_{f}']).unsqueeze(1).float() for f in fields]
@@ -108,14 +106,11 @@ def snapshot_pred(rho: np.ndarray, temp: np.ndarray, pressure: np.ndarray, ux: n
     sim_data.resolution = resolution
 
     shape = (resolution[0] // downsample, resolution[1] // downsample)
-    fields = ['rho', 'temp', 'ux', 'uy', 'ps', 'fmcl']
+    fields = ['rho', 'temp', 'ux', 'uy', 'ps']
     cg = {f'cg_{field}': np.zeros(shape) for field in fields}
 
     for field in fields:
-        if field in ['rho', 'temp', 'ux', 'uy', 'ps']:
-            cg[f'cg_{field}'] = sim_data.coarse_grain(locals()[field])
-        elif field in ['fmcl']:
-            cg[f'cg_{field}'] = sim_data.calc_fmcl(rho, temp)
+        cg[f'cg_{field}'] = sim_data.coarse_grain(locals()[field])
     
     subgrid_flux = np.zeros((10, shape[0], shape[1]))
 
@@ -208,7 +203,7 @@ class CharbonnierLoss(nn.Module):
 
 if __name__ == "__main__":
 
-    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/c{resolution[0]}_{resolution[1]}/bin"
+    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{resolution[0]}_{resolution[1]}/bin"
 
     print(f"Training all fluxes model")
     torch.cuda.empty_cache()

@@ -75,8 +75,8 @@ def lambda_cool(temp):
     return lam
 
 resolution = (16, 8)
-file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sd_build/src/gate{resolution[0]}_{resolution[1]}/bin"
-save_path = f"mocks/sg/gate{resolution}/"
+file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sd_build/src/pdf_flux_{resolution[0]}_{resolution[1]}/bin"
+save_path = f"mocks/sg/pdf_flux_{resolution}/"
 os.makedirs(save_path, exist_ok=True)
 
 sim_data = simulation_data()
@@ -554,73 +554,73 @@ plt.savefig(save_path + "all_fields_snapshot.png", dpi=200)
 plt.close(fig)
 print("Saved snapshot of all fields")
 
-fig, axs = plt.subplots(6, 3, figsize=(8, 20))
+# fig, axs = plt.subplots(6, 3, figsize=(8, 20))
 
-ims = []
-colorbars = []
+# ims = []
+# colorbars = []
 
-for i in range(6):
-    im0 = axs[i, 0].imshow(fields_hr[i][0], origin='lower', cmap='plasma')
-    axs[i, 0].set_title(f"HR {titles[i]}")
-    cb0 = plt.colorbar(im0, ax=axs[i, 0], fraction=0.035, pad=0.02)
+# for i in range(6):
+#     im0 = axs[i, 0].imshow(fields_hr[i][0], origin='lower', cmap='plasma')
+#     axs[i, 0].set_title(f"HR {titles[i]}")
+#     cb0 = plt.colorbar(im0, ax=axs[i, 0], fraction=0.035, pad=0.02)
 
-    im1 = axs[i, 1].imshow(fields_sg[i][0], origin='lower', cmap='plasma')
-    axs[i, 1].set_title(f"SG {titles[i]}")
-    cb1 = plt.colorbar(im1, ax=axs[i, 1], fraction=0.035, pad=0.02)
+#     im1 = axs[i, 1].imshow(fields_sg[i][0], origin='lower', cmap='plasma')
+#     axs[i, 1].set_title(f"SG {titles[i]}")
+#     cb1 = plt.colorbar(im1, ax=axs[i, 1], fraction=0.035, pad=0.02)
 
-    im2 = axs[i, 2].imshow(fields_lr[i][0], origin='lower', cmap='plasma')
-    axs[i, 2].set_title(f"LR {titles[i]}")
-    cb2 = plt.colorbar(im2, ax=axs[i, 2], fraction=0.035, pad=0.02)
+#     im2 = axs[i, 2].imshow(fields_lr[i][0], origin='lower', cmap='plasma')
+#     axs[i, 2].set_title(f"LR {titles[i]}")
+#     cb2 = plt.colorbar(im2, ax=axs[i, 2], fraction=0.035, pad=0.02)
 
-    ims.append([im0, im1, im2])
-    colorbars.append([cb0, cb1, cb2])
+#     ims.append([im0, im1, im2])
+#     colorbars.append([cb0, cb1, cb2])
 
-def update_all(frame):
-    updated = []
+# def update_all(frame):
+#     updated = []
 
-    for i in range(6):
-        f_hr = fields_hr[i][frame]
-        f_sg = fields_sg[i][frame]
-        f_lr = fields_lr[i][frame]
+#     for i in range(6):
+#         f_hr = fields_hr[i][frame]
+#         f_sg = fields_sg[i][frame]
+#         f_lr = fields_lr[i][frame]
 
-        arr = np.concatenate([f_hr.flatten(), f_sg.flatten(), f_lr.flatten()])
-        vmin = arr[arr > 0].min() if np.any(arr > 0) else arr.min()
-        vmax = arr.max()
+#         arr = np.concatenate([f_hr.flatten(), f_sg.flatten(), f_lr.flatten()])
+#         vmin = arr[arr > 0].min() if np.any(arr > 0) else arr.min()
+#         vmax = arr.max()
 
-        use_log = (i == 0 or i == 1) and vmin > 0
-        norm = LogNorm(vmin=vmin, vmax=vmax) if use_log else None
+#         use_log = (i == 0 or i == 1) and vmin > 0
+#         norm = LogNorm(vmin=vmin, vmax=vmax) if use_log else None
 
-        if norm:
-            ims[i][0].set_norm(norm)
-            ims[i][1].set_norm(norm)
-            ims[i][2].set_norm(norm)
-        else:
-            ims[i][0].set_clim(vmin, vmax)
-            ims[i][1].set_clim(vmin, vmax)
-            ims[i][2].set_clim(vmin, vmax)
+#         if norm:
+#             ims[i][0].set_norm(norm)
+#             ims[i][1].set_norm(norm)
+#             ims[i][2].set_norm(norm)
+#         else:
+#             ims[i][0].set_clim(vmin, vmax)
+#             ims[i][1].set_clim(vmin, vmax)
+#             ims[i][2].set_clim(vmin, vmax)
 
-        ims[i][0].set_data(f_hr)
-        ims[i][1].set_data(f_sg)
-        ims[i][2].set_data(f_lr)
+#         ims[i][0].set_data(f_hr)
+#         ims[i][1].set_data(f_sg)
+#         ims[i][2].set_data(f_lr)
 
-        for cb in colorbars[i]:
-            cb.update_normal(ims[i][0])
+#         for cb in colorbars[i]:
+#             cb.update_normal(ims[i][0])
 
-        updated.extend(ims[i])
+#         updated.extend(ims[i])
 
-    for ax in axs.flat:
-        ax.set_xlabel(f"Timestep: {frame}")
+#     for ax in axs.flat:
+#         ax.set_xlabel(f"Timestep: {frame}")
 
-    return updated
+#     return updated
 
-ani_all = animation.FuncAnimation(
-    fig, update_all, frames=rho.shape[0], interval=100, blit=False
-)
+# ani_all = animation.FuncAnimation(
+#     fig, update_all, frames=rho.shape[0], interval=100, blit=False
+# )
 
-plt.tight_layout()
-ani_all.save(save_path + "all_fields_evolution.gif", writer="ffmpeg")
-plt.close(fig)
-print("Saved updated animation with correct dynamic colorbars")
+# plt.tight_layout()
+# ani_all.save(save_path + "all_fields_evolution.gif", writer="ffmpeg")
+# plt.close(fig)
+# print("Saved updated animation with correct dynamic colorbars")
 
 cons_fields_hr = [
     cg_hr_cons_rho,
@@ -658,80 +658,80 @@ cons_titles = [
     "fmcl"
 ]
 
-fig, axs = plt.subplots(6, 3, figsize=(8, 20))
-ims = []
-cbs = []
+# fig, axs = plt.subplots(6, 3, figsize=(8, 20))
+# ims = []
+# cbs = []
 
-for i in range(6):
-    im0 = axs[i, 0].imshow(cons_fields_hr[i][0], origin='lower', cmap='plasma')
-    cb0 = plt.colorbar(im0, ax=axs[i, 0], fraction=0.035, pad=0.02)
+# for i in range(6):
+#     im0 = axs[i, 0].imshow(cons_fields_hr[i][0], origin='lower', cmap='plasma')
+#     cb0 = plt.colorbar(im0, ax=axs[i, 0], fraction=0.035, pad=0.02)
 
-    im1 = axs[i, 1].imshow(cons_fields_sg[i][0], origin='lower', cmap='plasma')
-    cb1 = plt.colorbar(im1, ax=axs[i, 1], fraction=0.035, pad=0.02)
+#     im1 = axs[i, 1].imshow(cons_fields_sg[i][0], origin='lower', cmap='plasma')
+#     cb1 = plt.colorbar(im1, ax=axs[i, 1], fraction=0.035, pad=0.02)
 
-    im2 = axs[i, 2].imshow(cons_fields_lr[i][0], origin='lower', cmap='plasma')
-    cb2 = plt.colorbar(im2, ax=axs[i, 2], fraction=0.035, pad=0.02)
+#     im2 = axs[i, 2].imshow(cons_fields_lr[i][0], origin='lower', cmap='plasma')
+#     cb2 = plt.colorbar(im2, ax=axs[i, 2], fraction=0.035, pad=0.02)
 
-    axs[i, 0].set_title(f"HR {cons_titles[i]}")
-    axs[i, 1].set_title(f"SG {cons_titles[i]}")
-    axs[i, 2].set_title(f"LR {cons_titles[i]}")
+#     axs[i, 0].set_title(f"HR {cons_titles[i]}")
+#     axs[i, 1].set_title(f"SG {cons_titles[i]}")
+#     axs[i, 2].set_title(f"LR {cons_titles[i]}")
 
-    ims.append([im0, im1, im2])
-    cbs.append([cb0, cb1, cb2])
-
-
-def update_cons(frame):
-    updated = []
-
-    for i in range(6):
-        f_hr = cons_fields_hr[i][frame]
-        f_sg = cons_fields_sg[i][frame]
-        f_lr = cons_fields_lr[i][frame]
-
-        arr = np.concatenate([f_hr.flatten(), f_sg.flatten(), f_lr.flatten()])
-        vmin = arr[arr > 0].min() if np.any(arr > 0) else arr.min()
-        vmax = arr.max()
-
-        use_log = (i == 0 or i == 3) and vmin > 0    
-        norm = LogNorm(vmin=vmin, vmax=vmax) if use_log else None
-
-        if norm:
-            ims[i][0].set_norm(norm)
-            ims[i][1].set_norm(norm)
-            ims[i][2].set_norm(norm)
-        else:
-            ims[i][0].set_clim(vmin, vmax)
-            ims[i][1].set_clim(vmin, vmax)
-            ims[i][2].set_clim(vmin, vmax)
-
-        ims[i][0].set_data(f_hr)
-        ims[i][1].set_data(f_sg)
-        ims[i][2].set_data(f_lr)
-
-        for cb in cbs[i]:
-            cb.update_normal(ims[i][0])
-
-        updated.extend(ims[i])
-
-    for ax in axs.flat:
-        ax.set_xlabel(f"Timestep: {frame}")
-
-    return updated
+#     ims.append([im0, im1, im2])
+#     cbs.append([cb0, cb1, cb2])
 
 
-ani_cons = animation.FuncAnimation(
-    fig,
-    update_cons,
-    frames=cons_rho.shape[0],
-    interval=100,
-    blit=False
-)
+# def update_cons(frame):
+#     updated = []
 
-plt.tight_layout()
-ani_cons.save(save_path + "cons_fields_evolution.gif", writer="ffmpeg")
-plt.close(fig)
+#     for i in range(6):
+#         f_hr = cons_fields_hr[i][frame]
+#         f_sg = cons_fields_sg[i][frame]
+#         f_lr = cons_fields_lr[i][frame]
 
-print("Saved conserved-field animation with dynamic colorbars")
+#         arr = np.concatenate([f_hr.flatten(), f_sg.flatten(), f_lr.flatten()])
+#         vmin = arr[arr > 0].min() if np.any(arr > 0) else arr.min()
+#         vmax = arr.max()
+
+#         use_log = (i == 0 or i == 3) and vmin > 0    
+#         norm = LogNorm(vmin=vmin, vmax=vmax) if use_log else None
+
+#         if norm:
+#             ims[i][0].set_norm(norm)
+#             ims[i][1].set_norm(norm)
+#             ims[i][2].set_norm(norm)
+#         else:
+#             ims[i][0].set_clim(vmin, vmax)
+#             ims[i][1].set_clim(vmin, vmax)
+#             ims[i][2].set_clim(vmin, vmax)
+
+#         ims[i][0].set_data(f_hr)
+#         ims[i][1].set_data(f_sg)
+#         ims[i][2].set_data(f_lr)
+
+#         for cb in cbs[i]:
+#             cb.update_normal(ims[i][0])
+
+#         updated.extend(ims[i])
+
+#     for ax in axs.flat:
+#         ax.set_xlabel(f"Timestep: {frame}")
+
+#     return updated
+
+
+# ani_cons = animation.FuncAnimation(
+#     fig,
+#     update_cons,
+#     frames=cons_rho.shape[0],
+#     interval=100,
+#     blit=False
+# )
+
+# plt.tight_layout()
+# ani_cons.save(save_path + "cons_fields_evolution.gif", writer="ffmpeg")
+# plt.close(fig)
+
+# print("Saved conserved-field animation with dynamic colorbars")
 
 # bins = np.logspace(4, 6, 200)
 # window = 10
@@ -1269,4 +1269,113 @@ plt.tight_layout()
 plt.savefig(save_path + "gas_mass_evolution.png", dpi=200)
 plt.close(fig)
 print("Gas mass evolution plot saved")
+
+gamma = 1.6667
+rho0 = 1e-3
+p0 = 8.63359
+du = 31.0918
+
+def plot_flux_column(axs, col, title, rho, ux, uy, pres, temp):
+    """
+    Plot one column (HR / SG / LR).
+    Uses horizontal+temporal means and the TRML frame.
+    Requires globals:
+        gamma, rho0, p0, du, sim_data, lambda_cool
+    """
+
+    chi = 100.0
+
+    # --- TRML frame -------------------------------------------------
+    hot = temp > 1e5
+    hot_count = hot.sum(axis=2)
+    hot_count = hot_count.clip(min=1)
+
+    uz_h = (uy * hot).sum(axis=2) / hot_count
+    v_trml = -uz_h / (chi - 1.0)
+    uy = uy - v_trml[:, :, None]
+
+    # --- Bernoulli & emissivity ------------------------------------
+    B = 0.5 * (ux**2 + uy**2) + gamma * pres / ((gamma - 1.0) * rho)
+
+    kb = 1.380649e-16
+    emis = lambda_cool(temp) * (pres / (kb * temp))**2
+
+    # --- Horizontal + temporal means -------------------------------
+    rho_bar = rho.mean(axis=(0, 2), keepdims=True)
+    ux_bar = ux.mean(axis=(0, 2), keepdims=True)
+    uy_bar = uy.mean(axis=(0, 2), keepdims=True)
+    B_bar = B.mean(axis=(0, 2), keepdims=True)
+    rho_uy_bar = (rho * uy).mean(axis=(0, 2), keepdims=True)
+
+    drho = rho - rho_bar
+    dux = ux - ux_bar
+    duy = uy - uy_bar
+
+    y = np.linspace(
+        -sim_data.total_length / 2,
+         sim_data.total_length / 2,
+         rho.shape[1]
+    )
+
+    panels = [
+        [
+            (rho_bar * uy_bar / (rho0 * du), "red", r"$\langle\rho\rangle\langle u_z\rangle$"),
+            (drho * duy / (rho0 * du), "blue", r"$\langle\delta\rho\,\delta u_z\rangle$"),
+            (rho * uy / (rho0 * du), "black", r"$\langle\rho u_z\rangle$")
+        ],
+        [
+            (rho_bar * uy_bar * ux_bar / (rho0 * du**2), "red", r"$\langle\rho u_z\rangle\langle u_x\rangle$"),
+            (rho * duy * dux / (rho0 * du**2), "blue", r"$\langle\delta(\rho u_z)\delta u_x\rangle$"),
+            (rho * uy * ux / (rho0 * du**2), "black", r"$\langle\rho u_z u_x\rangle$")
+        ],
+        [
+            (pres / p0, "green", r"$\langle p\rangle$"),
+            (rho * uy**2 / p0, "blue", r"$\langle\rho u_z^2\rangle$"),
+            (drho * duy**2 / p0, "red", r"$\langle\delta\rho\,\delta u_z^2\rangle$"),
+            ((pres + rho * uy**2) / p0, "black", r"$\langle p+\rho u_z^2\rangle$")
+        ],
+        [
+            (emis / (p0 * du), "blue", r"$\langle n^2\Lambda\rangle$"),
+            (B_bar * rho_uy_bar / (p0 * du), "green", r"$\langle\mathcal{B}\rangle\langle\rho u_z\rangle$"),
+            ((B - B_bar) * (rho * uy - rho_uy_bar) / (p0 * du), "red",
+             r"$\langle\delta\mathcal{B}\delta(\rho u_z)\rangle$"),
+            (B * rho * uy / (p0 * du), "black", r"$\langle\mathcal{B}\rho u_z\rangle$")
+        ]
+    ]
+
+    for row, terms in enumerate(panels):
+        for arr, color, label in terms:
+            prof = arr.mean(axis=2)
+            mean = prof.mean(axis=0)
+            std = prof.std(axis=0)
+            axs[row, col].plot(y, mean, color=color, lw=2, label=label)
+            axs[row, col].fill_between(y, mean - std, mean + std,
+                                       color=color, alpha=0.25)
+
+    axs[0, col].set_title(title)
+
+    for i in range(4):
+        axs[i, col].grid(True, ls="--", alpha=0.4)
+
+    if col == 0:
+        axs[0, col].set_ylabel("Mass")
+        axs[1, col].set_ylabel("X Momentum")
+        axs[2, col].set_ylabel("Z Momentum")
+        axs[3, col].set_ylabel("Energy")
+        for i in range(4):
+            axs[i, col].legend(fontsize=8)
+
+    axs[3, col].set_xlabel("y")
+
+fig, axs = plt.subplots(4, 3, figsize=(16, 12), sharex=True)
+
+plot_flux_column(axs, 0, "HR", cg_hr_rho, cg_hr_ux, cg_hr_uy, cg_hr_pres, cg_hr_temp)
+plot_flux_column(axs, 1, "SG", rho, ux, uy, pres, temp)
+plot_flux_column(axs, 2, "LR", lr_rho, lr_ux, lr_uy, lr_pres, lr_temp)
+
+plt.tight_layout()
+plt.savefig(save_path + "flux_profiles_hr_sg_lr.png", dpi=200)
+plt.close()
+
+print("flux_profiles_hr_sg_lr.png saved")
 

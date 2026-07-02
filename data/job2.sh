@@ -15,26 +15,32 @@
 
 FILE_PATH="mocks/sg/gate(16, 8)"
 
-# Remove old mp4s if they exist
-rm -f "${FILE_PATH}/all_fields_evolution.mp4"
-rm -f "${FILE_PATH}/cons_fields_evolution.mp4"
+# # Remove old mp4s if they exist
+# rm -f "${FILE_PATH}/all_fields_evolution.mp4"
+# rm -f "${FILE_PATH}/cons_fields_evolution.mp4"
+# rm -f "${FILE_PATH}/fourier_spectrum_hr_sg_lr.mp4"
 
 echo "Starting SG Anim..."
 python3 -u mocks/mock_sg.py
 
-echo "Converting gif to mp4..."
-module load ffmpeg
+# echo "Converting gif to mp4..."
+# module load ffmpeg
 
-ffmpeg -i "${FILE_PATH}/all_fields_evolution.gif" \
-       -movflags faststart -pix_fmt yuv420p \
-       "${FILE_PATH}/all_fields_evolution.mp4"
+# ffmpeg -i "${FILE_PATH}/all_fields_evolution.gif" \
+#        -movflags faststart -pix_fmt yuv420p \
+#        "${FILE_PATH}/all_fields_evolution.mp4"
 
-ffmpeg -i "${FILE_PATH}/cons_fields_evolution.gif" \
-       -movflags faststart -pix_fmt yuv420p \
-       "${FILE_PATH}/cons_fields_evolution.mp4"
+# ffmpeg -i "${FILE_PATH}/cons_fields_evolution.gif" \
+#        -movflags faststart -pix_fmt yuv420p \
+#        "${FILE_PATH}/cons_fields_evolution.mp4"
 
-echo "Deleting GIFs..."
-rm -f "${FILE_PATH}/all_fields_evolution.gif"
-rm -f "${FILE_PATH}/cons_fields_evolution.gif"
+# ffmpeg -i "${FILE_PATH}/fourier_spectrum_hr_sg_lr.gif" \
+#        -movflags faststart -pix_fmt yuv420p \
+#        "${FILE_PATH}/fourier_spectrum_hr_sg_lr.mp4"
+
+# echo "Deleting GIFs..."
+# rm -f "${FILE_PATH}/all_fields_evolution.gif"
+# rm -f "${FILE_PATH}/cons_fields_evolution.gif"
+# rm -f "${FILE_PATH}/fourier_spectrum_hr_sg_lr.gif"
 
 echo "Conversion done."

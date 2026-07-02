@@ -1,108 +1,8 @@
-Loading data:   0%|          | 0/500 [00:00<?, ?it/s]Loading data:  15%|█▍        | 74/500 [00:00<00:00, 735.02it/s]Loading data:  30%|██▉       | 149/500 [00:00<00:00, 740.09it/s]Loading data:  45%|████▍     | 224/500 [00:00<00:00, 738.11it/s]Loading data:  60%|█████▉    | 299/500 [00:00<00:00, 739.09it/s]Loading data:  75%|███████▍  | 373/500 [00:00<00:00, 736.48it/s]Loading data:  89%|████████▉ | 447/500 [00:00<00:00, 737.36it/s]Loading data: 100%|██████████| 500/500 [00:00<00:00, 738.22it/s]
-Loading cons data:   0%|          | 0/500 [00:00<?, ?it/s]Loading cons data:  17%|█▋        | 86/500 [00:00<00:00, 853.61it/s]Loading cons data:  34%|███▍      | 172/500 [00:00<00:00, 853.85it/s]Loading cons data:  52%|█████▏    | 258/500 [00:00<00:00, 854.22it/s]Loading cons data:  69%|██████▉   | 344/500 [00:00<00:00, 855.11it/s]Loading cons data:  86%|████████▌ | 430/500 [00:00<00:00, 855.14it/s]Loading cons data: 100%|██████████| 500/500 [00:00<00:00, 855.18it/s]
-Loading data:   0%|          | 0/500 [00:00<?, ?it/s]Loading data:  17%|█▋        | 85/500 [00:00<00:00, 840.12it/s]Loading data:  34%|███▍      | 170/500 [00:00<00:00, 839.17it/s]Loading data:  51%|█████     | 255/500 [00:00<00:00, 842.32it/s]Loading data:  68%|██████▊   | 340/500 [00:00<00:00, 843.01it/s]Loading data:  85%|████████▌ | 425/500 [00:00<00:00, 844.83it/s]Loading data: 100%|██████████| 500/500 [00:00<00:00, 843.68it/s]
-Loading cons data:   0%|          | 0/500 [00:00<?, ?it/s]Loading cons data:  17%|█▋        | 86/500 [00:00<00:00, 855.65it/s]Loading cons data:  34%|███▍      | 172/500 [00:00<00:00, 857.31it/s]Loading cons data:  52%|█████▏    | 258/500 [00:00<00:00, 856.64it/s]Loading cons data:  69%|██████▉   | 344/500 [00:00<00:00, 857.11it/s]Loading cons data:  86%|████████▌ | 430/500 [00:00<00:00, 856.83it/s]Loading cons data: 100%|██████████| 500/500 [00:00<00:00, 850.58it/s]
-Calculating CG HR:   0%|          | 0/500 [00:00<?, ?it/s]Calculating CG HR:   4%|▍         | 20/500 [00:00<00:02, 197.79it/s]Calculating CG HR:   8%|▊         | 40/500 [00:00<00:02, 196.62it/s]Calculating CG HR:  12%|█▏        | 61/500 [00:00<00:02, 198.25it/s]Calculating CG HR:  16%|█▋        | 82/500 [00:00<00:02, 199.01it/s]Calculating CG HR:  20%|██        | 102/500 [00:00<00:01, 199.23it/s]Calculating CG HR:  25%|██▍       | 123/500 [00:00<00:01, 199.46it/s]Calculating CG HR:  29%|██▊       | 143/500 [00:00<00:01, 199.61it/s]Calculating CG HR:  33%|███▎      | 163/500 [00:00<00:01, 199.73it/s]Calculating CG HR:  37%|███▋      | 184/500 [00:00<00:01, 199.83it/s]Calculating CG HR:  41%|████      | 205/500 [00:01<00:01, 199.94it/s]Calculating CG HR:  45%|████▌     | 225/500 [00:01<00:01, 199.95it/s]Calculating CG HR:  49%|████▉     | 245/500 [00:01<00:01, 199.94it/s]Calculating CG HR:  53%|█████▎    | 266/500 [00:01<00:01, 200.04it/s]Calculating CG HR:  57%|█████▋    | 287/500 [00:01<00:01, 200.13it/s]Calculating CG HR:  62%|██████▏   | 308/500 [00:01<00:00, 200.14it/s]Calculating CG HR:  66%|██████▌   | 329/500 [00:01<00:00, 200.08it/s]Calculating CG HR:  70%|███████   | 350/500 [00:01<00:00, 200.06it/s]Calculating CG HR:  74%|███████▍  | 371/500 [00:01<00:00, 200.21it/s]Calculating CG HR:  78%|███████▊  | 392/500 [00:01<00:00, 200.29it/s]Calculating CG HR:  83%|████████▎ | 413/500 [00:02<00:00, 200.35it/s]Calculating CG HR:  87%|████████▋ | 434/500 [00:02<00:00, 200.25it/s]Calculating CG HR:  91%|█████████ | 455/500 [00:02<00:00, 200.38it/s]Calculating CG HR:  95%|█████████▌| 476/500 [00:02<00:00, 197.30it/s]Calculating CG HR:  99%|█████████▉| 497/500 [00:02<00:00, 198.13it/s]Calculating CG HR: 100%|██████████| 500/500 [00:02<00:00, 199.41it/s]
-CG HR Fluxes:   0%|          | 0/500 [00:00<?, ?it/s]CG HR Fluxes:   4%|▍         | 20/500 [00:00<00:02, 196.42it/s]CG HR Fluxes:   8%|▊         | 40/500 [00:00<00:02, 198.03it/s]CG HR Fluxes:  12%|█▏        | 60/500 [00:00<00:02, 198.82it/s]CG HR Fluxes:  16%|█▌        | 80/500 [00:00<00:02, 198.60it/s]CG HR Fluxes:  20%|██        | 100/500 [00:00<00:02, 198.35it/s]CG HR Fluxes:  24%|██▍       | 120/500 [00:00<00:01, 198.84it/s]CG HR Fluxes:  28%|██▊       | 140/500 [00:00<00:01, 198.07it/s]CG HR Fluxes:  32%|███▏      | 161/500 [00:00<00:01, 199.06it/s]CG HR Fluxes:  36%|███▌      | 181/500 [00:00<00:01, 199.29it/s]CG HR Fluxes:  40%|████      | 201/500 [00:01<00:01, 199.41it/s]CG HR Fluxes:  44%|████▍     | 221/500 [00:01<00:01, 199.54it/s]CG HR Fluxes:  48%|████▊     | 241/500 [00:01<00:01, 199.60it/s]CG HR Fluxes:  52%|█████▏    | 262/500 [00:01<00:01, 199.75it/s]CG HR Fluxes:  56%|█████▋    | 282/500 [00:01<00:01, 199.52it/s]CG HR Fluxes:  60%|██████    | 302/500 [00:01<00:00, 199.47it/s]CG HR Fluxes:  64%|██████▍   | 322/500 [00:01<00:00, 199.20it/s]CG HR Fluxes:  68%|██████▊   | 342/500 [00:01<00:00, 199.17it/s]CG HR Fluxes:  72%|███████▏  | 362/500 [00:01<00:00, 199.07it/s]CG HR Fluxes:  76%|███████▋  | 382/500 [00:01<00:00, 199.30it/s]CG HR Fluxes:  80%|████████  | 402/500 [00:02<00:00, 199.17it/s]CG HR Fluxes:  84%|████████▍ | 422/500 [00:02<00:00, 197.35it/s]CG HR Fluxes:  88%|████████▊ | 442/500 [00:02<00:00, 197.83it/s]CG HR Fluxes:  92%|█████████▏| 462/500 [00:02<00:00, 198.15it/s]CG HR Fluxes:  96%|█████████▋| 482/500 [00:02<00:00, 198.63it/s]CG HR Fluxes: 100%|██████████| 500/500 [00:02<00:00, 198.83it/s]
-MovieWriter ffmpeg unavailable; using Pillow instead.
-MovieWriter ffmpeg unavailable; using Pillow instead.
+Loading data:   0%|          | 0/500 [00:00<?, ?it/s]Loading data:  15%|█▌        | 75/500 [00:00<00:00, 740.50it/s]Loading data:  30%|███       | 150/500 [00:00<00:00, 741.15it/s]Loading data:  45%|████▌     | 225/500 [00:00<00:00, 738.77it/s]Loading data:  60%|█████▉    | 299/500 [00:00<00:00, 738.65it/s]Loading data:  75%|███████▍  | 373/500 [00:00<00:00, 739.03it/s]Loading data:  89%|████████▉ | 447/500 [00:00<00:00, 738.81it/s]Loading data: 100%|██████████| 500/500 [00:00<00:00, 739.19it/s]
+Loading cons data:   0%|          | 0/500 [00:00<?, ?it/s]Loading cons data:  17%|█▋        | 85/500 [00:00<00:00, 843.79it/s]Loading cons data:  34%|███▍      | 171/500 [00:00<00:00, 850.09it/s]Loading cons data:  51%|█████▏    | 257/500 [00:00<00:00, 852.45it/s]Loading cons data:  69%|██████▊   | 343/500 [00:00<00:00, 852.16it/s]Loading cons data:  86%|████████▌ | 429/500 [00:00<00:00, 852.37it/s]Loading cons data: 100%|██████████| 500/500 [00:00<00:00, 851.90it/s]
+Loading data:   0%|          | 0/500 [00:00<?, ?it/s]Loading data:  17%|█▋        | 85/500 [00:00<00:00, 846.78it/s]Loading data:  34%|███▍      | 170/500 [00:00<00:00, 847.27it/s]Loading data:  51%|█████     | 256/500 [00:00<00:00, 849.58it/s]Loading data:  68%|██████▊   | 341/500 [00:00<00:00, 818.60it/s]Loading data:  85%|████████▌ | 425/500 [00:00<00:00, 824.17it/s]Loading data: 100%|██████████| 500/500 [00:00<00:00, 831.58it/s]
+Loading cons data:   0%|          | 0/500 [00:00<?, ?it/s]Loading cons data:  17%|█▋        | 86/500 [00:00<00:00, 853.64it/s]Loading cons data:  34%|███▍      | 172/500 [00:00<00:00, 853.01it/s]Loading cons data:  52%|█████▏    | 258/500 [00:00<00:00, 852.29it/s]Loading cons data:  69%|██████▉   | 344/500 [00:00<00:00, 851.02it/s]Loading cons data:  86%|████████▌ | 430/500 [00:00<00:00, 849.47it/s]Loading cons data: 100%|██████████| 500/500 [00:00<00:00, 850.85it/s]
+Calculating CG HR:   0%|          | 0/500 [00:00<?, ?it/s]Calculating CG HR:   4%|▍         | 19/500 [00:00<00:02, 189.51it/s]Calculating CG HR:   8%|▊         | 38/500 [00:00<00:02, 189.20it/s]Calculating CG HR:  12%|█▏        | 58/500 [00:00<00:02, 191.65it/s]Calculating CG HR:  16%|█▌        | 78/500 [00:00<00:02, 192.66it/s]Calculating CG HR:  20%|█▉        | 98/500 [00:00<00:02, 193.16it/s]Calculating CG HR:  24%|██▎       | 118/500 [00:00<00:01, 193.42it/s]Calculating CG HR:  28%|██▊       | 138/500 [00:00<00:01, 193.69it/s]Calculating CG HR:  32%|███▏      | 158/500 [00:00<00:01, 193.61it/s]Calculating CG HR:  36%|███▌      | 178/500 [00:00<00:01, 193.66it/s]Calculating CG HR:  40%|███▉      | 198/500 [00:01<00:01, 193.64it/s]Calculating CG HR:  44%|████▎     | 218/500 [00:01<00:01, 194.00it/s]Calculating CG HR:  48%|████▊     | 238/500 [00:01<00:01, 194.25it/s]Calculating CG HR:  52%|█████▏    | 258/500 [00:01<00:01, 194.37it/s]Calculating CG HR:  56%|█████▌    | 278/500 [00:01<00:01, 194.55it/s]Calculating CG HR:  60%|█████▉    | 298/500 [00:01<00:01, 194.84it/s]Calculating CG HR:  64%|██████▎   | 318/500 [00:01<00:00, 194.84it/s]Calculating CG HR:  68%|██████▊   | 338/500 [00:01<00:00, 195.05it/s]Calculating CG HR:  72%|███████▏  | 358/500 [00:01<00:00, 195.06it/s]Calculating CG HR:  76%|███████▌  | 378/500 [00:01<00:00, 195.01it/s]Calculating CG HR:  80%|███████▉  | 398/500 [00:02<00:00, 194.96it/s]Calculating CG HR:  84%|████████▎ | 418/500 [00:02<00:00, 195.14it/s]Calculating CG HR:  88%|████████▊ | 438/500 [00:02<00:00, 195.25it/s]Calculating CG HR:  92%|█████████▏| 458/500 [00:02<00:00, 193.94it/s]Calculating CG HR:  96%|█████████▌| 478/500 [00:02<00:00, 194.21it/s]Calculating CG HR: 100%|█████████▉| 498/500 [00:02<00:00, 194.43it/s]Calculating CG HR: 100%|██████████| 500/500 [00:02<00:00, 194.05it/s]
+CG HR Fluxes:   0%|          | 0/500 [00:00<?, ?it/s]CG HR Fluxes:   4%|▍         | 19/500 [00:00<00:02, 189.72it/s]CG HR Fluxes:   8%|▊         | 39/500 [00:00<00:02, 193.04it/s]CG HR Fluxes:  12%|█▏        | 59/500 [00:00<00:02, 194.59it/s]CG HR Fluxes:  16%|█▌        | 79/500 [00:00<00:02, 194.67it/s]CG HR Fluxes:  20%|█▉        | 99/500 [00:00<00:02, 194.94it/s]CG HR Fluxes:  24%|██▍       | 119/500 [00:00<00:01, 194.30it/s]CG HR Fluxes:  28%|██▊       | 139/500 [00:00<00:01, 194.40it/s]CG HR Fluxes:  32%|███▏      | 159/500 [00:00<00:01, 194.22it/s]CG HR Fluxes:  36%|███▌      | 179/500 [00:00<00:01, 194.76it/s]CG HR Fluxes:  40%|███▉      | 199/500 [00:01<00:01, 193.90it/s]CG HR Fluxes:  44%|████▍     | 219/500 [00:01<00:01, 194.42it/s]CG HR Fluxes:  48%|████▊     | 239/500 [00:01<00:01, 194.00it/s]CG HR Fluxes:  52%|█████▏    | 259/500 [00:01<00:01, 194.49it/s]CG HR Fluxes:  56%|█████▌    | 279/500 [00:01<00:01, 195.06it/s]CG HR Fluxes:  60%|█████▉    | 299/500 [00:01<00:01, 194.81it/s]CG HR Fluxes:  64%|██████▍   | 319/500 [00:01<00:00, 194.52it/s]CG HR Fluxes:  68%|██████▊   | 339/500 [00:01<00:00, 195.18it/s]CG HR Fluxes:  72%|███████▏  | 359/500 [00:01<00:00, 195.41it/s]CG HR Fluxes:  76%|███████▌  | 379/500 [00:01<00:00, 194.94it/s]CG HR Fluxes:  80%|███████▉  | 399/500 [00:02<00:00, 194.90it/s]CG HR Fluxes:  84%|████████▍ | 419/500 [00:02<00:00, 194.30it/s]CG HR Fluxes:  88%|████████▊ | 439/500 [00:02<00:00, 192.44it/s]CG HR Fluxes:  92%|█████████▏| 459/500 [00:02<00:00, 192.52it/s]CG HR Fluxes:  96%|█████████▌| 479/500 [00:02<00:00, 191.95it/s]CG HR Fluxes: 100%|█████████▉| 499/500 [00:02<00:00, 191.55it/s]CG HR Fluxes: 100%|██████████| 500/500 [00:02<00:00, 193.81it/s]
 /u/dipda/.local/lib/python3.6/site-packages/numpy/lib/histograms.py:905: RuntimeWarning: invalid value encountered in true_divide
   return n/db/n.sum(), bin_edges
-ffmpeg version 7.1.1 Copyright (c) 2000-2025 the FFmpeg developers
-  built with gcc 9 (Ubuntu 9.4.0-1ubuntu1~20.04.2)
-  configuration: --enable-nonfree --enable-gpl --enable-openssl --enable-libdav1d --enable-libsvtav1 --enable-libx264 --enable-libx265 --enable-libvpx --enable-libxvid --enable-libvidstab --enable-libaom --enable-libzimg --enable-lv2 --enable-libopencore_amrnb --enable-libopencore_amrwb --enable-libmp3lame --enable-libopus --enable-libvorbis --enable-libtheora --enable-libfdk-aac --enable-libjxl --enable-libwebp --enable-libfreetype --enable-vapoursynth --enable-libsrt --enable-libzvbi --enable-libzmq --disable-ffnvcodec --enable-amf --disable-debug --disable-shared --enable-pthreads --enable-static --enable-version3 --extra-cflags='-I/builds/khr/ffmpeg-build-script/workspace/include -Wno-int-conversion -fPIC -I/builds/khr/ffmpeg-build-script/workspace/include/lilv-0' --extra-ldexeflags='-static -fPIC' --extra-ldflags=-L/builds/khr/ffmpeg-build-script/workspace/lib --extra-libs='-ldl -lpthread -lm -lz' --pkgconfigdir=/builds/khr/ffmpeg-build-script/workspace/lib/pkgconfig --pkg-config-flags=--static --prefix=/builds/khr/ffmpeg-build-script/workspace --extra-version=
-  libavutil      59. 39.100 / 59. 39.100
-  libavcodec     61. 19.101 / 61. 19.101
-  libavformat    61.  7.100 / 61.  7.100
-  libavdevice    61.  3.100 / 61.  3.100
-  libavfilter    10.  4.100 / 10.  4.100
-  libswscale      8.  3.100 /  8.  3.100
-  libswresample   5.  3.100 /  5.  3.100
-  libpostproc    58.  3.100 / 58.  3.100
-Input #0, gif, from 'mocks/sg/gate(16, 8)/all_fields_evolution.gif':
-  Duration: 00:00:50.00, start: 0.000000, bitrate: 6683 kb/s
-  Stream #0:0: Video: gif, bgra, 800x2000, 10 fps, 10 tbr, 100 tbn
-Stream mapping:
-  Stream #0:0 -> #0:0 (gif (native) -> h264 (libx264))
-Press [q] to stop, [?] for help
-[libx264 @ 0x1bb98340] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
-[libx264 @ 0x1bb98340] profile High, level 4.0, 4:2:0, 8-bit
-[libx264 @ 0x1bb98340] 264 - core 165 - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=1 ref=3 deblock=1:0:0 analyse=0x3:0x113 me=hex subme=7 psy=1 psy_rd=1.00:0.00 mixed_ref=1 me_range=16 chroma_me=1 trellis=1 8x8dct=1 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=-2 threads=60 lookahead_threads=10 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 open_gop=0 weightp=2 keyint=250 keyint_min=10 scenecut=40 intra_refresh=0 rc_lookahead=40 rc=crf mbtree=1 crf=23.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 ip_ratio=1.40 aq=1:1.00
-Output #0, mp4, to 'mocks/sg/gate(16, 8)/all_fields_evolution.mp4':
-  Metadata:
-    encoder         : Lavf61.7.100
-  Stream #0:0: Video: h264 (avc1 / 0x31637661), yuv420p(tv, progressive), 800x2000, q=2-31, 10 fps, 10240 tbn
-      Metadata:
-        encoder         : Lavc61.19.101 libx264
-      Side data:
-        cpb: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A    frame=   12 fps= 12 q=25.0 size=       0KiB time=00:00:01.00 bitrate=   0.4kbits/s speed=   1x    frame=   81 fps= 54 q=25.0 size=     768KiB time=00:00:07.90 bitrate= 796.4kbits/s speed=5.26x    frame=  150 fps= 75 q=25.0 size=    1280KiB time=00:00:14.80 bitrate= 708.5kbits/s speed= 7.4x    frame=  221 fps= 88 q=25.0 size=    2048KiB time=00:00:21.90 bitrate= 766.1kbits/s speed=8.76x    frame=  291 fps= 97 q=25.0 size=    2816KiB time=00:00:28.90 bitrate= 798.2kbits/s speed=9.63x    frame=  362 fps=103 q=25.0 size=    3328KiB time=00:00:36.00 bitrate= 757.3kbits/s speed=10.3x    [mp4 @ 0x1bb4cc80] Starting second pass: moving the moov atom to the beginning of the file
-[out#0/mp4 @ 0x1bb4cac0] video:4592KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.143049%
-frame=  500 fps=129 q=-1.0 Lsize=    4599KiB time=00:00:49.80 bitrate= 756.5kbits/s speed=12.8x    
-[libx264 @ 0x1bb98340] frame I:2     Avg QP:16.42  size: 87968
-[libx264 @ 0x1bb98340] frame P:175   Avg QP:21.99  size: 14324
-[libx264 @ 0x1bb98340] frame B:323   Avg QP:23.15  size:  6251
-[libx264 @ 0x1bb98340] consecutive B-frames:  7.6% 16.0%  8.4% 68.0%
-[libx264 @ 0x1bb98340] mb I  I16..4: 37.1% 32.2% 30.7%
-[libx264 @ 0x1bb98340] mb P  I16..4:  7.5% 10.6%  3.7%  P16..4:  9.6%  3.1%  1.5%  0.0%  0.0%    skip:64.0%
-[libx264 @ 0x1bb98340] mb B  I16..4:  4.0%  3.9%  0.7%  B16..8: 12.5%  2.6%  0.6%  direct: 4.4%  skip:71.3%  L0:50.6% L1:45.0% BI: 4.3%
-[libx264 @ 0x1bb98340] 8x8 transform intra:46.9% inter:68.0%
-[libx264 @ 0x1bb98340] coded y,uvDC,uvAC intra: 8.2% 29.1% 21.2% inter: 4.3% 9.0% 1.9%
-[libx264 @ 0x1bb98340] i16 v,h,dc,p: 46% 53%  1%  0%
-[libx264 @ 0x1bb98340] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 38%  9% 51%  1%  0%  0%  0%  0%  1%
-[libx264 @ 0x1bb98340] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 57% 26% 14%  0%  0%  0%  0%  1%  0%
-[libx264 @ 0x1bb98340] i8c dc,h,v,p: 51% 30% 19%  0%
-[libx264 @ 0x1bb98340] Weighted P-Frames: Y:0.0% UV:0.0%
-[libx264 @ 0x1bb98340] ref P L0: 53.0% 11.0% 21.3% 14.8%
-[libx264 @ 0x1bb98340] ref B L0: 76.7% 18.0%  5.3%
-[libx264 @ 0x1bb98340] ref B L1: 93.5%  6.5%
-[libx264 @ 0x1bb98340] kb/s:752.30
-ffmpeg version 7.1.1 Copyright (c) 2000-2025 the FFmpeg developers
-  built with gcc 9 (Ubuntu 9.4.0-1ubuntu1~20.04.2)
-  configuration: --enable-nonfree --enable-gpl --enable-openssl --enable-libdav1d --enable-libsvtav1 --enable-libx264 --enable-libx265 --enable-libvpx --enable-libxvid --enable-libvidstab --enable-libaom --enable-libzimg --enable-lv2 --enable-libopencore_amrnb --enable-libopencore_amrwb --enable-libmp3lame --enable-libopus --enable-libvorbis --enable-libtheora --enable-libfdk-aac --enable-libjxl --enable-libwebp --enable-libfreetype --enable-vapoursynth --enable-libsrt --enable-libzvbi --enable-libzmq --disable-ffnvcodec --enable-amf --disable-debug --disable-shared --enable-pthreads --enable-static --enable-version3 --extra-cflags='-I/builds/khr/ffmpeg-build-script/workspace/include -Wno-int-conversion -fPIC -I/builds/khr/ffmpeg-build-script/workspace/include/lilv-0' --extra-ldexeflags='-static -fPIC' --extra-ldflags=-L/builds/khr/ffmpeg-build-script/workspace/lib --extra-libs='-ldl -lpthread -lm -lz' --pkgconfigdir=/builds/khr/ffmpeg-build-script/workspace/lib/pkgconfig --pkg-config-flags=--static --prefix=/builds/khr/ffmpeg-build-script/workspace --extra-version=
-  libavutil      59. 39.100 / 59. 39.100
-  libavcodec     61. 19.101 / 61. 19.101
-  libavformat    61.  7.100 / 61.  7.100
-  libavdevice    61.  3.100 / 61.  3.100
-  libavfilter    10.  4.100 / 10.  4.100
-  libswscale      8.  3.100 /  8.  3.100
-  libswresample   5.  3.100 /  5.  3.100
-  libpostproc    58.  3.100 / 58.  3.100
-Input #0, gif, from 'mocks/sg/gate(16, 8)/cons_fields_evolution.gif':
-  Duration: 00:00:50.00, start: 0.000000, bitrate: 6660 kb/s
-  Stream #0:0: Video: gif, bgra, 800x2000, 10 fps, 10 tbr, 100 tbn
-Stream mapping:
-  Stream #0:0 -> #0:0 (gif (native) -> h264 (libx264))
-Press [q] to stop, [?] for help
-[libx264 @ 0x134aa9c0] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
-[libx264 @ 0x134aa9c0] profile High, level 4.0, 4:2:0, 8-bit
-[libx264 @ 0x134aa9c0] 264 - core 165 - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=1 ref=3 deblock=1:0:0 analyse=0x3:0x113 me=hex subme=7 psy=1 psy_rd=1.00:0.00 mixed_ref=1 me_range=16 chroma_me=1 trellis=1 8x8dct=1 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=-2 threads=60 lookahead_threads=10 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 open_gop=0 weightp=2 keyint=250 keyint_min=10 scenecut=40 intra_refresh=0 rc_lookahead=40 rc=crf mbtree=1 crf=23.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 ip_ratio=1.40 aq=1:1.00
-Output #0, mp4, to 'mocks/sg/gate(16, 8)/cons_fields_evolution.mp4':
-  Metadata:
-    encoder         : Lavf61.7.100
-  Stream #0:0: Video: h264 (avc1 / 0x31637661), yuv420p(tv, progressive), 800x2000, q=2-31, 10 fps, 10240 tbn
-      Metadata:
-        encoder         : Lavc61.19.101 libx264
-      Side data:
-        cpb: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A    frame=   45 fps= 45 q=25.0 size=     256KiB time=00:00:04.30 bitrate= 487.8kbits/s speed= 4.3x    frame=  118 fps= 79 q=25.0 size=     768KiB time=00:00:11.60 bitrate= 542.4kbits/s speed=7.73x    frame=  189 fps= 94 q=25.0 size=    1280KiB time=00:00:18.70 bitrate= 560.8kbits/s speed=9.35x    frame=  258 fps=103 q=25.0 size=    1792KiB time=00:00:25.60 bitrate= 573.5kbits/s speed=10.2x    frame=  328 fps=109 q=25.0 size=    2304KiB time=00:00:32.60 bitrate= 579.0kbits/s speed=10.9x    frame=  410 fps=117 q=25.0 size=    2560KiB time=00:00:40.80 bitrate= 514.0kbits/s speed=11.7x    [mp4 @ 0x1345e880] Starting second pass: moving the moov atom to the beginning of the file
-[out#0/mp4 @ 0x1345e700] video:3244KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.200792%
-frame=  500 fps=138 q=-1.0 Lsize=    3251KiB time=00:00:49.80 bitrate= 534.8kbits/s speed=13.8x    
-[libx264 @ 0x134aa9c0] frame I:2     Avg QP:17.18  size: 93022
-[libx264 @ 0x134aa9c0] frame P:175   Avg QP:21.70  size: 10780
-[libx264 @ 0x134aa9c0] frame B:323   Avg QP:24.06  size:  3867
-[libx264 @ 0x134aa9c0] consecutive B-frames:  7.4% 14.8% 13.8% 64.0%
-[libx264 @ 0x134aa9c0] mb I  I16..4: 31.7% 38.7% 29.6%
-[libx264 @ 0x134aa9c0] mb P  I16..4:  6.1%  8.8%  2.5%  P16..4:  8.8%  2.5%  1.3%  0.0%  0.0%    skip:70.0%
-[libx264 @ 0x134aa9c0] mb B  I16..4:  1.9%  1.5%  0.3%  B16..8: 10.3%  1.8%  0.4%  direct: 4.5%  skip:79.3%  L0:49.1% L1:47.2% BI: 3.7%
-[libx264 @ 0x134aa9c0] 8x8 transform intra:47.3% inter:66.9%
-[libx264 @ 0x134aa9c0] coded y,uvDC,uvAC intra: 6.4% 22.7% 17.3% inter: 2.7% 6.8% 1.4%
-[libx264 @ 0x134aa9c0] i16 v,h,dc,p: 56% 44%  1%  0%
-[libx264 @ 0x134aa9c0] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 23%  7% 69%  0%  0%  0%  0%  0%  0%
-[libx264 @ 0x134aa9c0] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 50% 30% 17%  0%  1%  1%  1%  1%  1%
-[libx264 @ 0x134aa9c0] i8c dc,h,v,p: 59% 28% 13%  0%
-[libx264 @ 0x134aa9c0] Weighted P-Frames: Y:0.0% UV:0.0%
-[libx264 @ 0x134aa9c0] ref P L0: 59.4% 11.4% 18.5% 10.7%
-[libx264 @ 0x134aa9c0] ref B L0: 80.1% 15.4%  4.5%
-[libx264 @ 0x134aa9c0] ref B L1: 95.1%  4.9%
-[libx264 @ 0x134aa9c0] kb/s:531.47

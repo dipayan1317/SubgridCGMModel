@@ -9,14 +9,16 @@ from scipy.ndimage import gaussian_filter, sobel
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../conv_nn')))
-from pdf_cnn import ConvNN
+from pdf_cnn import ConvNN as PDF_CNN
+from all_flux_cnn import ConvNN as AllFlux_CNN
 
 np.random.seed(10)
 device = torch.device('cpu')
 resolution = (512, 256)  
 downsample = 32  
 in_channels = 5
-out_channels = 40
+out_channels_pdf = 40
+out_channels_flux = 12
 layer_size1 = 32
 layer_size2 = 64
 layer_size3 = 128
@@ -30,7 +32,7 @@ dropout_rate = 0.3
 total_length: float = 20 
 total_width: float = 10 
 gamma: float = 5.0 / 3.0
-T_edges = np.logspace(3.0, 7.0, out_channels + 1)
+T_edges = np.logspace(3.0, 7.0, out_channels_pdf + 1)
 T_centers = 0.5 * (T_edges[:-1] + T_edges[1:])
 logT_centers = torch.log10(torch.tensor(T_centers, dtype=torch.float32))
 
@@ -367,20 +369,22 @@ def build_gmm_pdf(
 
 # Source terms for PDF predictions (discrete)
 
-input_mean = np.load(
+input_mean_pdf = np.load(
     f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/conv_nn/pdf_model_saves/cnn_{resolution}_{downsample}_input_mean.npy"
 )
 
-input_std = np.load(
+input_std_pdf = np.load(
     f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/conv_nn/pdf_model_saves/cnn_{resolution}_{downsample}_input_std.npy"
 )
+
+input_mean_flux = np.load(f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_input_mean.npy")
+input_std_flux = np.load(f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_input_std.npy")
 
 
 def source_func(rho, pres, ux, uy, ps, fmcl):
 
     global resolution, downsample
-    global cnn_model
-    global input_mean, input_std
+    global input_mean_pdf, input_std_pdf, input_mean_flux, input_std_flux
     global device
     global total_length, total_width
 
@@ -433,21 +437,37 @@ def source_func(rho, pres, ux, uy, ps, fmcl):
     # Normalize
     # ------------------------------------------------------------
 
-    input_mean_torch = torch.tensor(
-        input_mean,
+    input_mean_pdf_torch = torch.tensor(
+        input_mean_pdf,
         dtype=torch.float32
     )
 
-    input_std_torch = torch.tensor(
-        input_std,
+    input_std_pdf_torch = torch.tensor(
+        input_std_pdf,
         dtype=torch.float32
     )
 
-    input_tensor = (
-        input_tensor - input_mean_torch
-    ) / input_std_torch
+    input_tensor_pdf = (
+        input_tensor - input_mean_pdf_torch
+    ) / input_std_pdf_torch
 
-    input_tensor = input_tensor.to(device)
+    input_tensor_pdf = input_tensor_pdf.to(device)
+
+    input_mean_flux_torch = torch.tensor(
+        input_mean_flux,
+        dtype=torch.float32
+    )
+
+    input_std_flux_torch = torch.tensor(
+        input_std_flux,
+        dtype=torch.float32
+    )
+
+    input_tensor_flux = (
+        input_tensor - input_mean_flux_torch
+    ) / input_std_flux_torch
+
+    input_tensor_flux = input_tensor_flux.to(device)
 
     # ------------------------------------------------------------
     # Allocate source term
@@ -461,30 +481,35 @@ def source_func(rho, pres, ux, uy, ps, fmcl):
     # Load model
     # ------------------------------------------------------------
 
-    model_path = (
+    model_path_pdf = (
         f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/"
         f"conv_nn/pdf_model_saves/"
         f"cnn_{resolution}_{downsample}.pth"
     )
 
-    cnn_model = ConvNN(
+    model_path_flux = (
+        f'/ptmp/mpa/dipda/subgrid/SubgridCGMModel/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}.pth'
+    )
+
+
+    cnn_model_pdf = PDF_CNN(
         in_channels,
         layer_size1,
         layer_size2,
         layer_size3,
         layer_size4,
-        out_channels,
+        out_channels_pdf,
         kernel_size
     ).to(device)
 
-    cnn_model.load_state_dict(
+    cnn_model_pdf.load_state_dict(
         torch.load(
-            model_path,
+            model_path_pdf,
             map_location=device
         )
     )
 
-    cnn_model.eval()
+    cnn_model_pdf.eval()
 
     # ------------------------------------------------------------
     # Predict PDF
@@ -492,7 +517,7 @@ def source_func(rho, pres, ux, uy, ps, fmcl):
 
     with torch.no_grad():
 
-        pdf = cnn_model.predict_pdf(input_tensor)
+        pdf = cnn_model_pdf.predict_pdf(input_tensor_pdf)
 
         pdf = pdf[0].cpu().numpy()
 
@@ -525,7 +550,7 @@ def source_func(rho, pres, ux, uy, ps, fmcl):
 
     kb = 1.380649e-16
 
-    nb = out_channels
+    nb = out_channels_pdf
 
     temp_bins = np.logspace(
         3,
@@ -556,6 +581,43 @@ def source_func(rho, pres, ux, uy, ps, fmcl):
 
     # energy source term
     source_term[3] = -cool_rate
+
+    # ------------------------------------------------------------
+    # Predict Fluxes
+    # ------------------------------------------------------------
+
+    cnn_model_flux = AllFlux_CNN(in_channels, layer_size1, layer_size2, layer_size3, out_channels_flux, kernel_size).to(device)
+    cnn_model_flux.load_state_dict(torch.load(model_path_flux, map_location=device))
+    cnn_model_flux.eval()
+
+    subgrid_flux = np.zeros((out_channels_flux, shape[0], shape[1]))
+    output_mean = torch.from_numpy(np.load(f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_output_mean.npy"))
+    output_std = torch.from_numpy(np.load(f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/conv_nn/all_flux_model_saves/cnn_{resolution}_{downsample}_output_std.npy"))
+
+    with torch.no_grad():
+        output_mean = output_mean.to(device)
+        output_std = output_std.to(device)
+        pred = cnn_model_flux(input_tensor_flux)  
+        pred = pred * output_std + output_mean  
+        subgrid_flux = pred[0].cpu().numpy()  
+
+    # rho source term
+    rho_terms = np.array([subgrid_flux[0], subgrid_flux[1]])
+    source_term[0] = - divergence(rho_terms, dx, dy)
+
+    # momenta source terms
+    source_term[1] = - np.gradient(subgrid_flux[2], dy, dx)[1] - np.gradient(subgrid_flux[3], dy, dx)[1]
+    source_term[2] = - np.gradient(subgrid_flux[3], dy, dx)[0] - np.gradient(subgrid_flux[4], dy, dx)[0]
+    
+    # energy source term
+    energy_terms = np.array([subgrid_flux[5] + subgrid_flux[6], subgrid_flux[7] + subgrid_flux[8]])
+    source_term[3] -= divergence(energy_terms, dx, dy) 
+    # source_term[3] += subgrid_flux[9]
+
+    # fmcl source term
+    fmcl_terms = np.array([subgrid_flux[10], subgrid_flux[11]])
+    source_term[4] = - divergence(fmcl_terms, dx, dy)
+
 
     # ------------------------------------------------------------
     # Adaptive smoothing
