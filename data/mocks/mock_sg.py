@@ -15,13 +15,19 @@ from matplotlib.colors import LogNorm
 import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation
 from tqdm import tqdm
+from scipy.optimize import curve_fit
+
+gamma = 1.6667
+rho0 = 1e-3
+p0 = 8.63359
+du = 31.0918
 
 def divergence(f, dx, dy):
     dFx_dx = np.gradient(f[0], dy, dx)[1]
     dFy_dy = np.gradient(f[1], dy, dx)[0]
     return dFx_dx + dFy_dy
 
-def lambda_cool(temp):
+def lambda_cool(temp, mask=True):
     """
     Cooling function ISMCoolFn translated from AthenaK C++.
     Works on scalars or numpy arrays (any shape).
@@ -71,12 +77,16 @@ def lambda_cool(temp):
         dx = logt[mask_mid] - x0
         logcool = (lhd[ipps+1]*dx - lhd[ipps]*(dx - 0.04)) * 25.0
         lam[mask_mid] = 10.0**logcool
+    
+    if mask:
+        mask_off = (logt < 4.1) | (logt > 5.9)
+        lam[mask_off] = 0.0
 
     return lam
 
 resolution = (16, 8)
-file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sd_build/src/pdf_flux_{resolution[0]}_{resolution[1]}/bin"
-save_path = f"mocks/sg/pdf_flux_{resolution}/"
+file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sg_build/src/pdf_trial_87/bin"
+save_path = f"mocks/sg/pdf_trial_87/"
 os.makedirs(save_path, exist_ok=True)
 
 sim_data = simulation_data()
@@ -103,7 +113,7 @@ lr_frac[temp < sim_data.T_cutoff] = 1.0
 frac = sim_data.frho
 
 lr_resolution = resolution
-lr_file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{lr_resolution[0]}_{lr_resolution[1]}/bin"
+lr_file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/hr_build/src/sct{lr_resolution[0]}_{lr_resolution[1]}/bin"
 lr_sim_data = simulation_data()
 lr_sim_data.resolution = lr_resolution
 lr_sim_data.input_data(lr_file_path, start=501)
@@ -125,14 +135,14 @@ lr_fmcl = (lr_temp < 1e5).astype(float)
 
 hr_resolution = (512, 256)
 hr_downsample = 32
-hr_file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{hr_resolution[0]}_{hr_resolution[1]}/bin"
+hr_file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/hr_build/src/sct{hr_resolution[0]}_{hr_resolution[1]}/bin"
 hr_sim_data = simulation_data()
 hr_sim_data.resolution = hr_resolution
 hr_sim_data.down_sample = hr_downsample
 # hr_sim_data.input_data(hr_file_path)
 # hr_rho = hr_sim_data.rho
 # hr_temp = hr_sim_data.temp
-hr_folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/sc{hr_resolution}_{hr_downsample}"
+hr_folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/sct{hr_resolution}_32"
 hr_rho = np.load(f"{hr_folder_path}/rho.npy")
 hr_temp = np.load(f"{hr_folder_path}/temp.npy")
 hr_pres = np.load(f"{hr_folder_path}/pressure.npy")
@@ -622,41 +632,41 @@ print("Saved snapshot of all fields")
 # plt.close(fig)
 # print("Saved updated animation with correct dynamic colorbars")
 
-cons_fields_hr = [
-    cg_hr_cons_rho,
-    cg_hr_cons_momx,
-    cg_hr_cons_momy,
-    cg_hr_cons_ener,
-    cg_hr_cons_ps,
-    cg_hr_fmcl
-]
+# cons_fields_hr = [
+#     cg_hr_cons_rho,
+#     cg_hr_cons_momx,
+#     cg_hr_cons_momy,
+#     cg_hr_cons_ener,
+#     cg_hr_cons_ps,
+#     cg_hr_fmcl
+# ]
 
-cons_fields_sg = [
-    cons_rho,
-    cons_momx,
-    cons_momy,
-    cons_ener,
-    cons_ps,
-    fmcl
-]
+# cons_fields_sg = [
+#     cons_rho,
+#     cons_momx,
+#     cons_momy,
+#     cons_ener,
+#     cons_ps,
+#     fmcl
+# ]
 
-cons_fields_lr = [
-    lr_cons_rho,
-    lr_cons_momx,
-    lr_cons_momy,
-    lr_cons_ener,
-    lr_cons_ps,
-    lr_fmcl
-]
+# cons_fields_lr = [
+#     lr_cons_rho,
+#     lr_cons_momx,
+#     lr_cons_momy,
+#     lr_cons_ener,
+#     lr_cons_ps,
+#     lr_fmcl
+# ]
 
-cons_titles = [
-    "Cons Density",
-    "Cons MomX",
-    "Cons MomY",
-    "Cons Energy",
-    "Cons Passive Scalar",
-    "fmcl"
-]
+# cons_titles = [
+#     "Cons Density",
+#     "Cons MomX",
+#     "Cons MomY",
+#     "Cons Energy",
+#     "Cons Passive Scalar",
+#     "fmcl"
+# ]
 
 # fig, axs = plt.subplots(6, 3, figsize=(8, 20))
 # ims = []
@@ -985,9 +995,16 @@ print("temperature_pdfs_all_weightings.png saved")
 # epsilon ~ rho^2 * Lambda(T)
 # ------------------------------------------------------------
 
-emis_hr    = hr_rho**2    * lambda_cool(hr_temp)
-emis_sg    = rho**2       * lambda_cool(temp)
-emis_lr    = lr_rho**2    * lambda_cool(lr_temp)
+emis_hr    = hr_rho**2    * lambda_cool(hr_temp) * 1.975e27 / (p0 * du)
+filename = file_path.replace("/bin", "/") + "cool_rate.bin"
+dtype = np.float64
+nx = rho.shape[2]
+ny = rho.shape[1]
+data = np.fromfile(filename, dtype=dtype)
+nt = data.size // (nx * ny)
+emis_sg = data.reshape(nt, ny, nx) / (p0 * du)
+# emis_sg    = rho**2       * lambda_cool(temp, mask=True)
+emis_lr    = lr_rho**2    * lambda_cool(lr_temp) * 1.975e27 / (p0 * du)
 
 # ------------------------------------------------------------
 # Average over x
@@ -1053,6 +1070,20 @@ int_lr = np.trapz(
 )
 
 # ------------------------------------------------------------
+# 1-sigma width (z0) of the mean emissivity profile
+# ------------------------------------------------------------
+
+def profile_sigma(y, prof):
+    norm = np.trapz(prof, y)
+    y0 = np.trapz(y * prof, y) / norm
+    sigma = np.sqrt(np.trapz((y - y0)**2 * prof, y) / norm)
+    return sigma
+
+z0_hr = profile_sigma(y_hr, emis_hr_mean)
+z0_sg = profile_sigma(y_sg, emis_sg_mean)
+z0_lr = profile_sigma(y_lr, emis_lr_mean)
+
+# ------------------------------------------------------------
 # Plot
 # ------------------------------------------------------------
 
@@ -1070,7 +1101,7 @@ ax.plot(
     y_hr,
     emis_hr_mean,
     lw=2,
-    label=rf"HR ($\Sigma_c$={int_hr:.2e})"
+    label=rf"HR ($\Sigma_c$={int_hr:.2e}, z0={z0_hr:.2f})"
 )
 
 ax.fill_between(
@@ -1092,7 +1123,7 @@ ax.plot(
     y_sg,
     emis_sg_mean,
     lw=2,
-    label=rf"SG ($\Sigma_c$={int_sg:.2e})"
+    label=rf"SG ($\Sigma_c$={int_sg:.2e}, z0={z0_sg:.2f})"
 )
 
 ax.fill_between(
@@ -1114,7 +1145,7 @@ ax.plot(
     y_lr,
     emis_lr_mean,
     lw=2,
-    label=rf"LR ($\Sigma_c$={int_lr:.2e})"
+    label=rf"LR ($\Sigma_c$={int_lr:.2e}, z0={z0_lr:.2f})"
 )
 
 ax.fill_between(
@@ -1138,8 +1169,8 @@ ax.set_ylabel(
 )
 
 ax.set_ylim(
-    2e-28,
-    1e-24
+    2e-2,
+    1e1
 )
 
 ax.set_title(
@@ -1166,6 +1197,112 @@ plt.close(fig)
 print(
     "emissivity_profile_vs_y.png saved"
 )
+
+# ------------------------------------------------------------
+# Mass flux (rho * uz)
+# ------------------------------------------------------------
+
+mdot_hr = hr_rho * hr_uy / (rho0 * du)
+mdot_sg = rho * uy / (rho0 * du)
+mdot_lr = lr_rho * lr_uy / (rho0 * du)
+
+# ------------------------------------------------------------
+# Average over x
+# shape = (time, y)
+# ------------------------------------------------------------
+
+mdot_hr_xavg = np.mean(mdot_hr, axis=2)
+mdot_sg_xavg = np.mean(mdot_sg, axis=2)
+mdot_lr_xavg = np.mean(mdot_lr, axis=2)
+
+# ------------------------------------------------------------
+# Average over time
+# ------------------------------------------------------------
+
+mdot_hr_mean = np.mean(mdot_hr_xavg, axis=0)
+mdot_hr_std  = np.std(mdot_hr_xavg, axis=0)
+
+mdot_sg_mean = np.mean(mdot_sg_xavg, axis=0)
+mdot_sg_std  = np.std(mdot_sg_xavg, axis=0)
+
+mdot_lr_mean = np.mean(mdot_lr_xavg, axis=0)
+mdot_lr_std  = np.std(mdot_lr_xavg, axis=0)
+
+# ------------------------------------------------------------
+# y coordinates
+# ------------------------------------------------------------
+
+y_hr = np.linspace(0, sim_data.total_length, hr_rho.shape[1])
+y_sg = np.linspace(0, sim_data.total_length, rho.shape[1])
+y_lr = np.linspace(0, sim_data.total_length, lr_rho.shape[1])
+
+# ------------------------------------------------------------
+# Integrated mass flux (Mdot)
+# ------------------------------------------------------------
+
+Mdot_hr = np.mean((hr_rho * hr_uy)[:, -1, :]) / (rho0 * du)
+Mdot_sg = np.mean((rho * uy)[:, -1, :]) / (rho0 * du)
+Mdot_lr = np.mean((lr_rho * lr_uy)[:, -1, :]) / (rho0 * du)
+
+# ------------------------------------------------------------
+# Plot
+# ------------------------------------------------------------
+
+fig, ax = plt.subplots(figsize=(7,5))
+
+ax.plot(
+    y_hr,
+    mdot_hr_mean,
+    lw=2,
+    label=rf"HR ($\dot{{M}}$={Mdot_hr:.2e})"
+)
+
+ax.fill_between(
+    y_hr,
+    mdot_hr_mean - mdot_hr_std,
+    mdot_hr_mean + mdot_hr_std,
+    alpha=0.25
+)
+
+ax.plot(
+    y_sg,
+    mdot_sg_mean,
+    lw=2,
+    label=rf"SG ($\dot{{M}}$={Mdot_sg:.2e})"
+)
+
+ax.fill_between(
+    y_sg,
+    mdot_sg_mean - mdot_sg_std,
+    mdot_sg_mean + mdot_sg_std,
+    alpha=0.25
+)
+
+ax.plot(
+    y_lr,
+    mdot_lr_mean,
+    lw=2,
+    label=rf"LR ($\dot{{M}}$={Mdot_lr:.2e})"
+)
+
+ax.fill_between(
+    y_lr,
+    mdot_lr_mean - mdot_lr_std,
+    mdot_lr_mean + mdot_lr_std,
+    alpha=0.25
+)
+
+ax.set_xlabel("y")
+ax.set_ylabel(r"$\langle \rho u_z \rangle$")
+ax.set_title(r"Mean Mass Flux Profile vs $y$")
+ax.grid(True, ls="--", alpha=0.5)
+ax.legend()
+
+plt.tight_layout()
+plt.savefig(save_path + "mass_flux_profile_vs_y.png", dpi=200)
+plt.close(fig)
+
+print("mass_flux_profile_vs_y.png saved")
 
 # # --- data arrays (nt, ny, nx) ---
 # nt, ny_hr, nx_hr = cg_hr_rho.shape
@@ -1270,11 +1407,6 @@ plt.savefig(save_path + "gas_mass_evolution.png", dpi=200)
 plt.close(fig)
 print("Gas mass evolution plot saved")
 
-gamma = 1.6667
-rho0 = 1e-3
-p0 = 8.63359
-du = 31.0918
-
 def plot_flux_column(axs, col, title, rho, ux, uy, pres, temp):
     """
     Plot one column (HR / SG / LR).
@@ -1283,16 +1415,24 @@ def plot_flux_column(axs, col, title, rho, ux, uy, pres, temp):
         gamma, rho0, p0, du, sim_data, lambda_cool
     """
 
+    # ------------------------------------------------------------
+    # Transform to the TRML frame
+    # ------------------------------------------------------------
+
     chi = 100.0
 
-    # --- TRML frame -------------------------------------------------
     hot = temp > 1e5
-    hot_count = hot.sum(axis=2)
-    hot_count = hot_count.clip(min=1)
+    cold = ~hot
 
-    uz_h = (uy * hot).sum(axis=2) / hot_count
-    v_trml = -uz_h / (chi - 1.0)
-    uy = uy - v_trml[:, :, None]
+    # TRML velocity
+    rho_uz = np.mean(rho * uy)
+    rho_avg = np.mean(rho)
+    v_trml = rho_uz / rho_avg
+
+    print(f"Hot velocity for {title}: {-v_trml*(chi - 1):.3f} pc/Myr")
+
+    # subtract from every x cell
+    uy = uy - v_trml
 
     # --- Bernoulli & emissivity ------------------------------------
     B = 0.5 * (ux**2 + uy**2) + gamma * pres / ((gamma - 1.0) * rho)
@@ -1310,6 +1450,7 @@ def plot_flux_column(axs, col, title, rho, ux, uy, pres, temp):
     drho = rho - rho_bar
     dux = ux - ux_bar
     duy = uy - uy_bar
+    drho_uy = (rho * uy) - rho_uy_bar
 
     y = np.linspace(
         -sim_data.total_length / 2,
@@ -1325,29 +1466,40 @@ def plot_flux_column(axs, col, title, rho, ux, uy, pres, temp):
         ],
         [
             (rho_bar * uy_bar * ux_bar / (rho0 * du**2), "red", r"$\langle\rho u_z\rangle\langle u_x\rangle$"),
-            (rho * duy * dux / (rho0 * du**2), "blue", r"$\langle\delta(\rho u_z)\delta u_x\rangle$"),
+            (drho_uy * dux / (rho0 * du**2), "blue", r"$\langle\delta\rho\,u_z\,\delta u_x\rangle$"),
             (rho * uy * ux / (rho0 * du**2), "black", r"$\langle\rho u_z u_x\rangle$")
         ],
         [
             (pres / p0, "green", r"$\langle p\rangle$"),
-            (rho * uy**2 / p0, "blue", r"$\langle\rho u_z^2\rangle$"),
-            (drho * duy**2 / p0, "red", r"$\langle\delta\rho\,\delta u_z^2\rangle$"),
+            (rho_uy_bar * uy_bar / p0, "blue", r"$\langle\rho u_z\rangle\langle u_z\rangle$"),
+            (drho_uy * duy / p0, "red", r"$\langle\delta\rho\,u_z\,\delta u_z\rangle$"),
             ((pres + rho * uy**2) / p0, "black", r"$\langle p+\rho u_z^2\rangle$")
         ],
         [
             (emis / (p0 * du), "blue", r"$\langle n^2\Lambda\rangle$"),
             (B_bar * rho_uy_bar / (p0 * du), "green", r"$\langle\mathcal{B}\rangle\langle\rho u_z\rangle$"),
-            ((B - B_bar) * (rho * uy - rho_uy_bar) / (p0 * du), "red",
-             r"$\langle\delta\mathcal{B}\delta(\rho u_z)\rangle$"),
+            ((B - B_bar) * drho_uy / (p0 * du), "red",
+            r"$\langle\delta\mathcal{B}\,\delta\rho\,u_z\rangle$"),
             (B * rho * uy / (p0 * du), "black", r"$\langle\mathcal{B}\rho u_z\rangle$")
         ]
     ]
 
     for row, terms in enumerate(panels):
         for arr, color, label in terms:
+
             prof = arr.mean(axis=2)
             mean = prof.mean(axis=0)
             std = prof.std(axis=0)
+
+            if row == 0 and r"\delta\rho\,\delta u_z" in label:
+                label = f"{label} (max={mean.max():.3e})"
+
+            if row == 1 and r"\delta\rho\,u_z\,\delta u_x" in label:
+                label = f"{label} (min={mean.min():.3e})"
+            
+            if row == 2 and r"\delta\rho\,u_z\,\delta u_z" in label:
+                label = f"{label} (max={mean.max():.3e})"
+
             axs[row, col].plot(y, mean, color=color, lw=2, label=label)
             axs[row, col].fill_between(y, mean - std, mean + std,
                                        color=color, alpha=0.25)
@@ -1362,8 +1514,8 @@ def plot_flux_column(axs, col, title, rho, ux, uy, pres, temp):
         axs[1, col].set_ylabel("X Momentum")
         axs[2, col].set_ylabel("Z Momentum")
         axs[3, col].set_ylabel("Energy")
-        for i in range(4):
-            axs[i, col].legend(fontsize=8)
+    for i in range(4):
+        axs[i, col].legend(fontsize=8)
 
     axs[3, col].set_xlabel("y")
 
@@ -1379,3 +1531,94 @@ plt.close()
 
 print("flux_profiles_hr_sg_lr.png saved")
 
+# ------------------------------------------------------------
+# Mean profile helper
+# ------------------------------------------------------------
+
+def mean_profile(arr):
+    """Horizontal average then temporal average."""
+    prof = arr.mean(axis=2)
+    return prof.mean(axis=0), prof.std(axis=0)
+
+
+def tanh_profile(z, z0, zc, Tc, Th):
+    return 0.5 * (Th - Tc) * np.tanh((z - zc) / z0) + 0.5 * (Th + Tc)
+
+
+def plot_mean_profiles(axs, label, rho, ux, uy, temp):
+
+    z = np.linspace(
+        -sim_data.total_length / 2,
+         sim_data.total_length / 2,
+         rho.shape[1]
+    )
+
+    rho_mean, rho_std = mean_profile(rho / rho0)
+    ux_mean, ux_std = mean_profile(ux / du)
+    uy_mean, uy_std = mean_profile(uy / du)
+
+    Th = np.nanmax(temp)
+    Tc = np.nanmin(temp)
+
+    T_mean, T_std = mean_profile(temp / Th)
+
+    axs[0].plot(z, rho_mean, lw=2, label=label)
+    axs[0].fill_between(z, rho_mean-rho_std, rho_mean+rho_std, alpha=0.20)
+
+    axs[1].plot(z, ux_mean, lw=2, label=label)
+    axs[1].fill_between(z, ux_mean-ux_std, ux_mean+ux_std, alpha=0.20)
+
+    axs[2].plot(z, uy_mean, lw=2, label=label)
+    axs[2].fill_between(z, uy_mean-uy_std, uy_mean+uy_std, alpha=0.20)
+
+    try:
+        popt, _ = curve_fit(
+            lambda zz, z0, zc: tanh_profile(
+                zz, z0, zc, Tc/Th, 1.0),
+            z,
+            T_mean,
+            p0=[2.0,0.0],
+            bounds=([0.05,-10],[20,10])
+        )
+
+        fit = tanh_profile(z, popt[0], popt[1], Tc/Th, 1.0)
+
+        axs[3].plot(
+            z, fit, "--", lw=1.5,
+            label=f"{label} fit ($z_0={popt[0]:.2f}$)"
+        )
+
+        print(f"{label}: fitted z0 = {popt[0]:.4f}")
+
+    except Exception as e:
+        print(f"{label}: tanh fit failed ({e})")
+
+    axs[3].plot(z, T_mean, lw=2, label=label)
+    axs[3].fill_between(z, T_mean-T_std, T_mean+T_std, alpha=0.20)
+
+
+# ------------------------------------------------------------
+# Plot
+# ------------------------------------------------------------
+
+fig, axs = plt.subplots(4, 1, figsize=(8, 12), sharex=True)
+
+plot_mean_profiles(axs, "HR", cg_hr_rho, cg_hr_ux, cg_hr_uy, cg_hr_temp)
+plot_mean_profiles(axs, "SG", rho, ux, uy, temp)
+plot_mean_profiles(axs, "LR", lr_rho, lr_ux, lr_uy, lr_temp)
+
+axs[0].set_ylabel(r"$\langle\rho\rangle/\rho_h$")
+axs[1].set_ylabel(r"$\langle u_x\rangle/\Delta u$")
+axs[2].set_ylabel(r"$\langle u_z\rangle/\Delta u$")
+axs[3].set_ylabel(r"$\langle T\rangle/T_h$")
+axs[3].set_xlabel(r"$z/\Delta u\,t_0$")
+
+for ax in axs:
+    ax.grid(ls="--", alpha=0.4)
+    ax.legend(fontsize=8)
+
+plt.tight_layout()
+plt.savefig(save_path + "mean_profiles_hr_sg_lr.png", dpi=300)
+plt.close()
+
+print("mean_profiles_hr_sg_lr.png saved")

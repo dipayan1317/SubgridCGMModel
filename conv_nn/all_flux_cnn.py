@@ -19,7 +19,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
 resolution = (512, 256)  
-downsample = 32
+downsample = 8
 in_channels = 5
 out_channels = 12
 layer_size1 = 32
@@ -29,9 +29,9 @@ kernel_size = 5
 num_epochs = 1000
 print_every = 50
 batch_size = 64
-learning_rate = 1e-3
-weight_decay = 1e-4
-dropout_rate = 0.3
+learning_rate = 5e-4
+weight_decay = 1e-3
+dropout_rate = 0.2
 
 def nn_data(resolution: tuple, downsample: int) -> tuple:
     """ A function to load the data and return the inputs and outputs for the Conv neural network."""
@@ -40,7 +40,7 @@ def nn_data(resolution: tuple, downsample: int) -> tuple:
     sim_data.down_sample = downsample
     sim_data.resolution = resolution
 
-    folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/sc{resolution}_{downsample}"
+    folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/sc{resolution}_32"
     file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{resolution[0]}_{resolution[1]}/bin"
     if os.path.exists(f"{folder_path}"):
 
@@ -201,6 +201,28 @@ class CharbonnierLoss(nn.Module):
     def forward(self, pred, target):
         return torch.mean(torch.sqrt((pred - target)**2 + self.eps**2))
 
+class PeakAwareMSELoss(nn.Module):
+    def __init__(self, peak_weight=1.0, eps=1e-6):
+        super().__init__()
+        self.mse = nn.MSELoss()
+        self.peak_weight = peak_weight
+        self.eps = eps
+
+    def forward(self, pred, target):
+        # Standard MSE
+        mse_loss = self.mse(pred, target)
+
+        # (B, C)
+        pred_max = pred.amax(dim=(-2, -1))
+        true_max = target.amax(dim=(-2, -1))
+
+        # Mean absolute target flux for normalization
+        true_mean = target.abs().mean(dim=(-2, -1)).clamp_min(self.eps)
+
+        peak_loss = (((pred_max - true_max) / true_mean) ** 2).mean()
+
+        return mse_loss + self.peak_weight * peak_loss
+
 if __name__ == "__main__":
 
     file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{resolution[0]}_{resolution[1]}/bin"
@@ -210,7 +232,8 @@ if __name__ == "__main__":
 
     # Initialize the model, loss function, and optimizer
     cnn_model = ConvNN(in_channels, layer_size1, layer_size2, layer_size3, out_channels, kernel_size).to(device)
-    criterion = nn.MSELoss()
+    # criterion = nn.MSELoss()
+    criterion = PeakAwareMSELoss(peak_weight=0.01, eps=1e-6)
     # criterion = nn.SmoothL1Loss(beta=1.0)
     # criterion = CharbonnierLoss(eps=1e-3)
 

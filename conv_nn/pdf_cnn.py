@@ -12,8 +12,36 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../data')))
 import data_preprocess
 from data_preprocess import simulation_data
+import random
+import argparse
 
-np.random.seed(10)
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--alpha_emiss", type=float, default=500.0)
+parser.add_argument("--alpha_profile", type=float, default=500.0)
+parser.add_argument("--alpha_gate", type=float, default=5.0)
+parser.add_argument("--alpha_leak", type=float, default=10.0)
+parser.add_argument("--alpha_active_pdf", type=float, default=20.0)
+
+args = parser.parse_args()
+
+SEED = 10
+
+random.seed(SEED)
+np.random.seed(SEED)
+
+torch.manual_seed(SEED)
+torch.cuda.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)
+
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
+torch.use_deterministic_algorithms(True)
+
+g = torch.Generator()
+g.manual_seed(SEED)
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 # device = torch.device('cpu')
@@ -30,14 +58,14 @@ kernel_size = 5
 num_epochs = 1000
 print_every = 50
 batch_size = 64
-learning_rate = 1e-3
+learning_rate = 5e-4
 weight_decay = 1e-3
-dropout_rate = 0.3
+dropout_rate = 0.2
 
 T_edges = np.logspace(3.0, 7.0, out_channels + 1)
-T_centers = 0.5 * (T_edges[:-1] + T_edges[1:])
+T_centers = np.sqrt(T_edges[:-1] * T_edges[1:])  # geometric mean of edges
 
-logT_centers = torch.log10(torch.tensor(T_centers, dtype=torch.float32))
+logT_centers = np.log10(T_centers)
 
 def lambda_cool(temp):
     """
@@ -90,6 +118,9 @@ def lambda_cool(temp):
         logcool = (lhd[ipps+1]*dx - lhd[ipps]*(dx - 0.04)) * 25.0
         lam[mask_mid] = 10.0**logcool
 
+    mask_off = (logt < 4.1) | (logt > 5.9)
+    lam[mask_off] = 0.0
+
     return lam
 
 lambda_vals = lambda_cool(T_centers)
@@ -114,8 +145,8 @@ def nn_data(resolution: tuple, downsample: int) -> tuple:
     sim_data.down_sample = downsample
     sim_data.resolution = resolution
 
-    folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/sc{resolution}_{downsample}"
-    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sc{resolution[0]}_{resolution[1]}/bin"
+    folder_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/datafiles/sct{resolution}_32"
+    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/hr_build/src/sct{resolution[0]}_{resolution[1]}/bin"
     if os.path.exists(f"{folder_path}"):
 
         sim_data.rho = np.load(f"{folder_path}/rho.npy")
@@ -256,6 +287,151 @@ def snapshot_pred(
 
     return pdf
 
+def snapshot_pred_with_gate(
+    rho: np.ndarray,
+    temp: np.ndarray,
+    pressure: np.ndarray,
+    ux: np.ndarray,
+    uy: np.ndarray,
+    eint: np.ndarray,
+    ps: np.ndarray,
+    downsample: int,
+    resolution: tuple,
+):
+    """
+    Predict temperature PDFs together with the gate and vorticity.
+
+    Returns
+    -------
+    pdf : (bins, nx, ny)
+    gate : (nx, ny)
+    vorticity_mag : (nx, ny)
+    """
+
+    sim_data = simulation_data()
+    sim_data.down_sample = downsample
+    sim_data.resolution = resolution
+
+    shape = (
+        resolution[0] // downsample,
+        resolution[1] // downsample,
+    )
+
+    fields = ["rho", "temp", "ux", "uy", "ps"]
+
+    cg = {
+        f"cg_{field}": np.zeros(shape)
+        for field in fields
+    }
+
+    for field in fields:
+        cg[f"cg_{field}"] = sim_data.coarse_grain(
+            locals()[field]
+        )
+
+    # ----------------------------------------------------
+    # Build input tensor
+    # ----------------------------------------------------
+
+    input_tensor = torch.cat(
+        [
+            torch.from_numpy(cg[f"cg_{f}"]).unsqueeze(0).float()
+            for f in fields
+        ],
+        dim=0,
+    ).unsqueeze(0)
+
+    input_mean = torch.tensor(
+        np.load(
+            f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/conv_nn/pdf_model_saves/"
+            f"cnn_{resolution}_{downsample}_input_mean.npy"
+        ),
+        dtype=torch.float32,
+        device=device,
+    )
+
+    input_std = torch.tensor(
+        np.load(
+            f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/conv_nn/pdf_model_saves/"
+            f"cnn_{resolution}_{downsample}_input_std.npy"
+        ),
+        dtype=torch.float32,
+        device=device,
+    )
+
+    input_tensor = (
+        input_tensor.to(device) - input_mean
+    ) / input_std
+
+    # ----------------------------------------------------
+    # Load model
+    # ----------------------------------------------------
+
+    model_path = (
+        f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/"
+        f"conv_nn/pdf_model_saves/"
+        f"cnn_{resolution}_{downsample}.pth"
+    )
+
+    cnn_model = ConvNN(
+        in_channels,
+        layer_size1,
+        layer_size2,
+        layer_size3,
+        layer_size4,
+        out_channels,
+        kernel_size,
+    ).to(device)
+
+    cnn_model.load_state_dict(
+        torch.load(
+            model_path,
+            map_location=device,
+        )
+    )
+
+    cnn_model.eval()
+
+    with torch.no_grad():
+
+        # ------------------------------------------------
+        # Mixing features
+        # ------------------------------------------------
+
+        enriched = cnn_model.mixing(input_tensor)
+
+        mixing_features = enriched[
+            :,
+            -cnn_model._N_MIXING:,
+            :,
+            :
+        ]
+
+        gate = cnn_model.gate_branch(
+            mixing_features
+        )
+
+        # ------------------------------------------------
+        # Predict PDF
+        # ------------------------------------------------
+
+        pdf = cnn_model.predict_pdf(
+            input_tensor
+        )
+
+        pdf = pdf[0].cpu().numpy()
+
+        gate = gate[0, 0].cpu().numpy()
+
+        # channel 0 = |omega|
+        vorticity_mag = (
+            mixing_features[0, 0]
+            .cpu()
+            .numpy()
+        )
+
+    return pdf, gate, vorticity_mag
+
 class ThresholdedSoftmax(nn.Module):
     """
     Thresholded-softmax Gate for PDF bins.
@@ -287,6 +463,52 @@ class ThresholdedSoftmax(nn.Module):
 
         # Step 3: re-normalize so survivors still sum to 1
         return p / (p.sum(dim=1, keepdim=True) + self.eps)
+
+# =========================
+# CENTRALIZED COOLING FUNCTION  
+# =========================
+def compute_cooling_rate(
+    rho_or_pdf, temp, pressure=None, is_pdf=False, is_isobaric=False, T_unit=None
+):
+    """
+    Standardized cooling calculation using internal Code Units.
+    Both modes calculate an effective `rho_code` and pass it through the exact same physics.
+    """
+    mu = 0.62
+    unit_fix = 1.975e27  # The grouped conversion (rho_0 * L_0) / (m_H^2 * v_0^3)
+
+    if not is_pdf:
+        # --- Mode 1: Fine-grid scalar path ---
+        # We ALREADY have the code density.
+        rho_eff = rho_or_pdf
+        lam = lambda_cool(temp)
+
+        n_code = rho_eff / mu
+        return lam * (n_code**2) * unit_fix
+
+    else:
+        # --- Mode 2: PDF-integrated path ---
+        pdf = rho_or_pdf  # (nb, nx, ny)
+        T_centers = temp  # (nb,)
+        lam = lambda_cool(T_centers)  # (nb,)
+
+        if is_isobaric:
+            if T_unit is None:
+                raise ValueError("T_unit must be provided for isobaric calculation.")
+
+            # Reconstruct the code density that WOULD exist at this temperature under isobaric assumption
+            # Formula: rho_code = P_code * (T_unit / T_phys)
+            # Shapes : (nx, ny)  * ( scalar / (nb,) ) -> (nb, nx, ny)
+            rho_eff = pressure[None, :, :] * (T_unit / T_centers[:, None, None])
+        else:
+            raise ValueError("Non-isobaric PDF cooling not supported here.")
+
+        n_code = rho_eff / mu
+
+        # Now it is mathematically identical to the fine-grid path!
+        cooling_per_bin = lam[:, None, None] * (n_code**2) * unit_fix
+
+        return np.sum(pdf * cooling_per_bin, axis=0)  # (nx,ny)
 
 class MixingLayerFeatures(nn.Module):
     """
@@ -744,29 +966,39 @@ class PDFEmissivityLoss(nn.Module):
         return total_loss
 
 class GatedPDFEmissivityLoss(nn.Module):
-    """
-    Extends PDFEmissivityLoss with an explicit gate supervision term.
-
-    Gate target is derived from the entropy of the true PDF:
-        - High entropy (broad, multi-phase)  → gate_target = 1
-        - Low entropy  (sharp, single-phase) → gate_target = 0
-
-    Total loss = KL(pred ‖ true) + α_emiss * emiss_MSE
-                 + α_profile * profile_MSE + α_gate * BCE(gate, gate_target)
-    """
-
     def __init__(
         self,
         alpha_emiss=1.0,
         alpha_profile=1.0,
         alpha_gate=1.0,
+        alpha_leak=1.0,
+        alpha_active_pdf=20.0,
         entropy_threshold=0.1,
+        logT_min=3.0,
+        logT_max=7.0,
+        num_bins=40,
+        logT_active_start=4.5,
+        logT_active_end=5.5,
+        mask_eps=0.0,
     ):
         super().__init__()
+
         self.alpha_emiss = alpha_emiss
         self.alpha_profile = alpha_profile
         self.alpha_gate = alpha_gate
+        self.alpha_leak = alpha_leak
+        self.alpha_active_pdf = alpha_active_pdf
         self.entropy_threshold = entropy_threshold
+        self.mask_eps = mask_eps
+
+        self.logT_min = logT_min
+        self.logT_max = logT_max
+        self.num_bins = num_bins
+
+        # Active window indices
+        bin_width = (logT_max - logT_min) / num_bins
+        self.start_idx = int(round((logT_active_start - logT_min) / bin_width))
+        self.end_idx = int(round((logT_active_end - logT_min) / bin_width))
 
         self.activation = GatedThresholdedSoftmax()
 
@@ -774,47 +1006,142 @@ class GatedPDFEmissivityLoss(nn.Module):
 
         pred_pdf = self.activation(logits, gate)
 
-        # --- PDF loss ---
-        # Step 1: calculate the KLdivergence loss per pixel
-        kl_elementwise = true_pdf * (
-            torch.log(true_pdf + 1e-12) - torch.log(pred_pdf + 1e-12)
-        )
-        kl_per_pixel = torch.sum(kl_elementwise, dim=1)
-        # Step 2: calculate the mean across all the pixels
-        pdf_loss = torch.mean(kl_per_pixel)
-
-        # --- Emissivity maps: shape (B, 1, nx, ny) ---
+        # -------------------------------------------------------
+        # Emissivity maps
+        # -------------------------------------------------------
         emiss_pred = emissivity_from_pdf(pred_pdf, rho, lambda_tensor)
         emiss_true = emissivity_from_pdf(true_pdf, rho, lambda_tensor)
 
-        emiss_loss = F.mse_loss(
-            torch.log10(emiss_pred + 1e-30), torch.log10(emiss_true + 1e-30)
+        # -------------------------------------------------------
+        # Spatial mask (cooling cells only)
+        # -------------------------------------------------------
+        mask = (emiss_true > self.mask_eps).float()      # (B,1,nx,ny)
+        mask_flat = mask.squeeze(1)                      # (B,nx,ny)
+        n_active = mask.sum().clamp(min=1.0)
+
+        # =======================================================
+        # 1. Global PDF loss
+        # =======================================================
+        kl_forward = true_pdf * (
+            torch.log(true_pdf + 1e-12) -
+            torch.log(pred_pdf + 1e-12)
         )
 
-        profile_pred = emiss_pred.mean(dim=3)  # (B, 1, nx)
-        profile_true = emiss_true.mean(dim=3)
-        profile_loss = F.mse_loss(
-            torch.log10(profile_pred + 1e-30), torch.log10(profile_true + 1e-30)
+        kl_reverse = pred_pdf * (
+            torch.log(pred_pdf + 1e-12) -
+            torch.log(true_pdf + 1e-12)
         )
 
-        # --- Gate supervision via true-PDF entropy ---
-        # entropy ∈ [0, log(bins)]; normalize to [0, 1]
-        entropy = -(true_pdf * torch.log(true_pdf + 1e-12)).sum(dim=1, keepdim=True)
+        global_pdf_loss = torch.mean(
+            torch.sum(kl_forward + kl_reverse, dim=1)
+        )
+
+        # =======================================================
+        # 2. Active window PDF loss
+        # =======================================================
+        true_active = true_pdf[:, self.start_idx:self.end_idx]
+        pred_active = pred_pdf[:, self.start_idx:self.end_idx]
+
+        kl_forward_active = true_active * (
+            torch.log(true_active + 1e-12)
+            - torch.log(pred_active + 1e-12)
+        )
+
+        kl_reverse_active = pred_active * (
+            torch.log(pred_active + 1e-12)
+            - torch.log(true_active + 1e-12)
+        )
+
+        kl_active_per_pixel = torch.sum(
+            kl_forward_active + 0.1 * kl_reverse_active,
+            dim=1,
+        )
+
+        active_pdf_loss = (
+            kl_active_per_pixel * mask_flat
+        ).sum() / (mask_flat.sum() + 1e-12)
+
+        # =======================================================
+        # 3. Masked emissivity loss
+        # =======================================================
+        log_pred = torch.log10(emiss_pred + 1e-30)
+        log_true = torch.log10(emiss_true + 1e-30)
+
+        sq_err = (log_pred - log_true) ** 2
+
+        emiss_loss = (sq_err * mask).sum() / n_active
+
+        # =======================================================
+        # 4. Masked profile loss
+        # =======================================================
+        row_counts = mask.sum(dim=3)
+        row_active = (row_counts > 0).float()
+
+        profile_pred = (
+            (emiss_pred * mask).sum(dim=3)
+            / row_counts.clamp(min=1.0)
+        )
+
+        profile_true = (
+            (emiss_true * mask).sum(dim=3)
+            / row_counts.clamp(min=1.0)
+        )
+
+        profile_sq_err = (
+            torch.log10(profile_pred + 1e-30)
+            - torch.log10(profile_true + 1e-30)
+        ) ** 2
+
+        profile_loss = (
+            profile_sq_err * row_active
+        ).sum() / (row_active.sum() + 1e-12)
+
+        # =======================================================
+        # 5. Gate supervision
+        # =======================================================
+        entropy = -(
+            true_pdf * torch.log(true_pdf + 1e-12)
+        ).sum(dim=1, keepdim=True)
+
         entropy_norm = entropy / np.log(true_pdf.shape[1])
-        gate_target = (entropy_norm > self.entropy_threshold).float()
 
-        gate_loss = F.binary_cross_entropy(gate, gate_target)
+        gate_target = (
+            entropy_norm > self.entropy_threshold
+        ).float()
 
-        return (
-            pdf_loss
+        gate_loss = F.binary_cross_entropy(
+            gate,
+            gate_target,
+        )
+
+        # =======================================================
+        # 6. Active window leakage loss
+        # =======================================================
+        pred_mass = pred_pdf[:, self.start_idx:self.end_idx].sum(dim=1)
+        true_mass = true_pdf[:, self.start_idx:self.end_idx].sum(dim=1)
+
+        leak_loss = (
+            torch.log10(pred_mass + 1e-12)
+            - torch.log10(true_mass + 1e-12)
+        ).pow(2).mean()
+
+        # =======================================================
+        # Total loss
+        # =======================================================
+        total_loss = (
+            global_pdf_loss
+            + self.alpha_active_pdf * active_pdf_loss
             + self.alpha_emiss * emiss_loss
             + self.alpha_profile * profile_loss
             + self.alpha_gate * gate_loss
+            + self.alpha_leak * leak_loss
         )
+
+        return total_loss
         
 if __name__ == "__main__":
 
-    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/c{resolution[0]}_{resolution[1]}/bin"
+    file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/kh_build/src/sct{resolution[0]}_{resolution[1]}/bin"
 
     print("Training all fluxes model")
 
@@ -825,9 +1152,11 @@ if __name__ == "__main__":
                        out_channels, kernel_size).to(device)
 
     criterion = GatedPDFEmissivityLoss(
-        alpha_emiss=30.0,
-        alpha_profile=20.0,
-        alpha_gate=1.0,
+        alpha_emiss=args.alpha_emiss,
+        alpha_profile=args.alpha_profile,
+        alpha_gate=args.alpha_gate,
+        alpha_leak=args.alpha_leak,
+        alpha_active_pdf=args.alpha_active_pdf,
     )
     # criterion = nn.KLDivLoss(reduction="batchmean")
     # criterion = PDFEmissivityLoss(
@@ -887,9 +1216,9 @@ if __name__ == "__main__":
     val_dataset = Subset(dataset, indices[train_end:val_end])
     test_dataset = Subset(dataset, indices[val_end:])
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    validation_loader = DataLoader(val_dataset, batch_size=batch_size)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, generator=g)
+    validation_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     epochs_array = []
     train_loss_arr = []
