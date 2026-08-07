@@ -6,16 +6,5 @@ fluxes_mean_std.png saved
 divergence_fluxes_mean_std.png saved
 Cold mass evolution plot saved (with fit slopes)
 Saved snapshot of all fields
-temperature_pdfs_all_weightings.png saved
-emissivity_profile_vs_y.png saved
-mass_flux_profile_vs_y.png saved
-Gas mass evolution plot saved
-Hot velocity for HR: 26.550 pc/Myr
-Hot velocity for SG: 17.577 pc/Myr
-Hot velocity for LR: 25.986 pc/Myr
-flux_profiles_hr_sg_lr.png saved
-HR: fitted z0 = 2.6402
-SG: fitted z0 = 1.5144
-LR: fitted z0 = 1.0878
-mean_profiles_hr_sg_lr.png saved
+Saved updated animation with correct dynamic colorbars
 Conversion done.

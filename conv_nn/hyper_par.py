@@ -255,103 +255,103 @@ def objective(trial):
 #         raise
 
 # Run over 100 iterations of hyperparameter optimization using Optuna
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    study = optuna.create_study(
-        study_name="cnn_hyperparams",
-        storage="sqlite:///cnn_hyperparams.db",
-        load_if_exists=True,
-        direction="minimize",
-    )
+#     study = optuna.create_study(
+#         study_name="cnn_hyperparams",
+#         storage="sqlite:///cnn_hyperparams.db",
+#         load_if_exists=True,
+#         direction="minimize",
+#     )
 
-    print(f"Completed trials before optimization: {len(study.trials)}")
+#     print(f"Completed trials before optimization: {len(study.trials)}")
 
-    study.optimize(
-        objective,
-        n_trials=100,
-    )
+#     study.optimize(
+#         objective,
+#         n_trials=100,
+#     )
 
-    print("=" * 100)
-    print("Optimization complete")
-    print("=" * 100)
+#     print("=" * 100)
+#     print("Optimization complete")
+#     print("=" * 100)
 
-    print(f"Best score: {study.best_value:.6f}")
+#     print(f"Best score: {study.best_value:.6f}")
 
-    print("\nBest parameters:")
-    for k, v in study.best_params.items():
-        print(f"{k}: {v}")
+#     print("\nBest parameters:")
+#     for k, v in study.best_params.items():
+#         print(f"{k}: {v}")
 
-    print("\nBest trial:", study.best_trial.number)
+#     print("\nBest trial:", study.best_trial.number)
 
-    print("=" * 100)
-    print("Re-running the best trial...")
-    print("=" * 100)
+#     print("=" * 100)
+#     print("Re-running the best trial...")
+#     print("=" * 100)
 
-    best_trial = DummyTrial(
-        study.best_params,
-        number=study.best_trial.number,
-    )
+#     best_trial = DummyTrial(
+#         study.best_params,
+#         number=study.best_trial.number,
+#     )
 
-    training(best_trial)
+#     training(best_trial)
 
-    run_athena(best_trial)
+#     run_athena(best_trial)
 
-    final_score = compare_simulation(best_trial)
+#     final_score = compare_simulation(best_trial, delete_folder=False)
 
-    print("=" * 100)
-    print("Best trial re-run completed.")
-    print(f"Final score: {final_score:.6f}")
-    print("=" * 100)
+#     print("=" * 100)
+#     print("Best trial re-run completed.")
+#     print(f"Final score: {final_score:.6f}")
+#     print("=" * 100)
 
 
 # Re-run the N-th best trial from the saved Optuna study
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
-#     N = 3      
+    N = 2      
 
-#     study = optuna.load_study(
-#         study_name="cnn_hyperparams",
-#         storage="sqlite:///cnn_hyperparams.db",
-#     )
+    study = optuna.load_study(
+        study_name="cnn_hyperparams",
+        storage="sqlite:///cnn_hyperparams.db",
+    )
 
-#     # Keep only completed trials
-#     completed_trials = [
-#         t for t in study.trials
-#         if t.state == optuna.trial.TrialState.COMPLETE
-#     ]
+    # Keep only completed trials
+    completed_trials = [
+        t for t in study.trials
+        if t.state == optuna.trial.TrialState.COMPLETE
+    ]
 
-#     # Sort by objective (lowest is best)
-#     completed_trials.sort(key=lambda t: t.value)
+    # Sort by objective (lowest is best)
+    completed_trials.sort(key=lambda t: t.value)
 
-#     if N < 1 or N > len(completed_trials):
-#         raise ValueError(
-#             f"Only {len(completed_trials)} completed trials are available."
-#         )
+    if N < 1 or N > len(completed_trials):
+        raise ValueError(
+            f"Only {len(completed_trials)} completed trials are available."
+        )
 
-#     selected = completed_trials[N - 1]
+    selected = completed_trials[N - 1]
 
-#     print("=" * 100)
-#     print(f"Re-running the #{N} best trial")
-#     print(f"Original trial number : {selected.number}")
-#     print(f"Objective value       : {selected.value:.6f}")
-#     print("=" * 100)
+    print("=" * 100)
+    print(f"Re-running the #{N} best trial")
+    print(f"Original trial number : {selected.number}")
+    print(f"Objective value       : {selected.value:.6f}")
+    print("=" * 100)
 
-#     print("\nHyperparameters:")
-#     for k, v in selected.params.items():
-#         print(f"{k}: {v}")
+    print("\nHyperparameters:")
+    for k, v in selected.params.items():
+        print(f"{k}: {v}")
 
-#     trial = DummyTrial(
-#         selected.params,
-#         number=selected.number,
-#     )
+    trial = DummyTrial(
+        selected.params,
+        number=selected.number,
+    )
 
-#     training(trial)
+    training(trial)
 
-#     run_athena(trial)
+    run_athena(trial)
 
-#     score = compare_simulation(trial, delete_folder=False)
+    score = compare_simulation(trial, delete_folder=False)
 
-#     print("=" * 100)
-#     print("Finished re-running selected trial")
-#     print(f"Objective score: {score:.6f}")
-#     print("=" * 100)
+    print("=" * 100)
+    print("Finished re-running selected trial")
+    print(f"Objective score: {score:.6f}")
+    print("=" * 100)
