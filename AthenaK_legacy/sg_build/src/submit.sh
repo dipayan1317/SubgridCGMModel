@@ -17,5 +17,5 @@ export OMP_PLACES=threads
 export PYTHONPATH=$PWD/python:$PYTHONPATH
 
 #./athena -i sg.athinput -d lrct16_8/
-./athena -i sg.athinput -d pdf_best_ns_16_8/ -r lrct16_8/rst/KH.00005.rst
+./athena -i sg.athinput -d pdf_test/ -r lrct16_8/rst/KH.00005.rst
 

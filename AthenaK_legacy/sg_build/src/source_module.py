@@ -579,11 +579,11 @@ def source_func(rho, pres, ux, uy, ps, fmcl):
     with open("cool_rate.bin", "ab") as f:
         cool_rate.tofile(f)
     
-    # with open("rho.bin", "ab") as f:
-    #     np.transpose(rho).tofile(f)
+    with open("rho.bin", "ab") as f:
+        np.transpose(rho).tofile(f)
 
-    # with open("pdf.bin", "ab") as f:
-    #     np.transpose(pdf, (0, 2, 1)).astype(np.float32).tofile(f)
+    with open("pdf.bin", "ab") as f:
+        np.transpose(pdf, (0, 2, 1)).astype(np.float32).tofile(f)
 
     # energy source term
     source_term[3] = -cool_rate

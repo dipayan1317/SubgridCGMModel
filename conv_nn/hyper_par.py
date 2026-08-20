@@ -18,11 +18,11 @@ def training(trial):
     print("=" * 100)
 
     alpha_emiss = trial.suggest_float(
-        "alpha_emiss", 1, 1000, log=True
+        "alpha_emiss", 0.1, 500, log=True
     )
 
     alpha_profile = trial.suggest_float(
-        "alpha_profile", 1, 1000, log=True
+        "alpha_profile", 0.1, 500, log=True
     )
 
     alpha_gate = trial.suggest_float(
@@ -125,6 +125,7 @@ def compare_simulation(trial, delete_folder=True):
 
     HR_EMISSIVITY = 1.47
     HR_MASS_FLUX = -0.451
+    HR_Z0 = 2.40
 
     gamma = 1.6667
     rho0 = 1e-3
@@ -133,7 +134,6 @@ def compare_simulation(trial, delete_folder=True):
 
     sim_data = simulation_data()
     sim_data.resolution = (16, 8)
-
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     folder_name = f"pdf_trial_{trial.number}"
@@ -144,7 +144,7 @@ def compare_simulation(trial, delete_folder=True):
             folder_name,
             "bin",
         )
-    )   
+    )
 
     sim_data.input_data(file_path, start=501)
 
@@ -167,8 +167,13 @@ def compare_simulation(trial, delete_folder=True):
 
     emiss = cool / (p0 * du)
 
+    # ============================================================
+    # Emissivity profile
+    # ============================================================
+
     emiss_xavg = emiss.mean(axis=2)
 
+    # Mean emissivity profile over time
     emiss_mean = emiss_xavg.mean(axis=0)
 
     y = np.linspace(
@@ -177,20 +182,63 @@ def compare_simulation(trial, delete_folder=True):
         ny
     )
 
+    # Integrated emissivity
     int_emiss = np.trapz(emiss_mean, y)
+
+    # ============================================================
+    # Emissivity profile width z0
+    # ============================================================
+
+    norm = np.trapz(emiss_mean, y)
+
+    y0 = np.trapz(
+        y * emiss_mean,
+        y
+    ) / norm
+
+    z0 = np.sqrt(
+        np.trapz(
+            (y - y0)**2 * emiss_mean,
+            y
+        ) / norm
+    )
+
+    # ============================================================
+    # Mass flux
+    # ============================================================
 
     mass_flux = np.mean(
         (rho * uy)[:, -1, :]
     ) / (rho0 * du)
 
-    emiss_err = abs(int_emiss - HR_EMISSIVITY) / abs(HR_EMISSIVITY)
+    # ============================================================
+    # Errors
+    # ============================================================
 
-    mass_err = abs(mass_flux - HR_MASS_FLUX) / abs(HR_MASS_FLUX)
+    emiss_err = (
+        abs(int_emiss - HR_EMISSIVITY)
+        / abs(HR_EMISSIVITY)
+    )
 
-    score = emiss_err + mass_err
+    mass_err = (
+        abs(mass_flux - HR_MASS_FLUX)
+        / abs(HR_MASS_FLUX)
+    )
+
+    z0_err = (
+        abs(z0 - HR_Z0)
+        / abs(HR_Z0)
+    )
+
+    # ============================================================
+    # Objective
+    # ============================================================
+
+    score = emiss_err + mass_err + z0_err
 
     print("=" * 100)
     print(f"Trial {trial.number}: Integrated emissivity : {int_emiss:.5f}")
+    print(f"Trial {trial.number}: z0                   : {z0:.5f}")
     print(f"Trial {trial.number}: Mass flux             : {mass_flux:.5f}")
     print(f"Trial {trial.number}: Objective             : {score:.6f}")
     print("=" * 100)
@@ -199,7 +247,7 @@ def compare_simulation(trial, delete_folder=True):
         BASE_DIR,
         "../AthenaK_legacy/sg_build/src",
         folder_name,
-    )   
+    )
 
     if delete_folder:
         shutil.rmtree(folder_path)
@@ -255,103 +303,103 @@ def objective(trial):
 #         raise
 
 # Run over 100 iterations of hyperparameter optimization using Optuna
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
-#     study = optuna.create_study(
-#         study_name="cnn_hyperparams",
-#         storage="sqlite:///cnn_hyperparams.db",
-#         load_if_exists=True,
-#         direction="minimize",
-#     )
+    study = optuna.create_study(
+        study_name="cnn_hyperparams",
+        storage="sqlite:///cnn_hyperparams.db",
+        load_if_exists=True,
+        direction="minimize",
+    )
 
-#     print(f"Completed trials before optimization: {len(study.trials)}")
+    print(f"Completed trials before optimization: {len(study.trials)}")
 
-#     study.optimize(
-#         objective,
-#         n_trials=100,
-#     )
+    study.optimize(
+        objective,
+        n_trials=100,
+    )
 
-#     print("=" * 100)
-#     print("Optimization complete")
-#     print("=" * 100)
+    print("=" * 100)
+    print("Optimization complete")
+    print("=" * 100)
 
-#     print(f"Best score: {study.best_value:.6f}")
+    print(f"Best score: {study.best_value:.6f}")
 
-#     print("\nBest parameters:")
-#     for k, v in study.best_params.items():
-#         print(f"{k}: {v}")
+    print("\nBest parameters:")
+    for k, v in study.best_params.items():
+        print(f"{k}: {v}")
 
-#     print("\nBest trial:", study.best_trial.number)
+    print("\nBest trial:", study.best_trial.number)
 
-#     print("=" * 100)
-#     print("Re-running the best trial...")
-#     print("=" * 100)
+    print("=" * 100)
+    print("Re-running the best trial...")
+    print("=" * 100)
 
-#     best_trial = DummyTrial(
-#         study.best_params,
-#         number=study.best_trial.number,
-#     )
+    best_trial = DummyTrial(
+        study.best_params,
+        number=study.best_trial.number,
+    )
 
-#     training(best_trial)
+    training(best_trial)
 
-#     run_athena(best_trial)
+    run_athena(best_trial)
 
-#     final_score = compare_simulation(best_trial, delete_folder=False)
+    final_score = compare_simulation(best_trial, delete_folder=False)
 
-#     print("=" * 100)
-#     print("Best trial re-run completed.")
-#     print(f"Final score: {final_score:.6f}")
-#     print("=" * 100)
+    print("=" * 100)
+    print("Best trial re-run completed.")
+    print(f"Final score: {final_score:.6f}")
+    print("=" * 100)
 
 
 # Re-run the N-th best trial from the saved Optuna study
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    N = 2      
+#     N = 3      
 
-    study = optuna.load_study(
-        study_name="cnn_hyperparams",
-        storage="sqlite:///cnn_hyperparams.db",
-    )
+#     study = optuna.load_study(
+#         study_name="cnn_hyperparams",
+#         storage="sqlite:///cnn_hyperparams.db",
+#     )
 
-    # Keep only completed trials
-    completed_trials = [
-        t for t in study.trials
-        if t.state == optuna.trial.TrialState.COMPLETE
-    ]
+#     # Keep only completed trials
+#     completed_trials = [
+#         t for t in study.trials
+#         if t.state == optuna.trial.TrialState.COMPLETE
+#     ]
 
-    # Sort by objective (lowest is best)
-    completed_trials.sort(key=lambda t: t.value)
+#     # Sort by objective (lowest is best)
+#     completed_trials.sort(key=lambda t: t.value)
 
-    if N < 1 or N > len(completed_trials):
-        raise ValueError(
-            f"Only {len(completed_trials)} completed trials are available."
-        )
+#     if N < 1 or N > len(completed_trials):
+#         raise ValueError(
+#             f"Only {len(completed_trials)} completed trials are available."
+#         )
 
-    selected = completed_trials[N - 1]
+#     selected = completed_trials[N - 1]
 
-    print("=" * 100)
-    print(f"Re-running the #{N} best trial")
-    print(f"Original trial number : {selected.number}")
-    print(f"Objective value       : {selected.value:.6f}")
-    print("=" * 100)
+#     print("=" * 100)
+#     print(f"Re-running the #{N} best trial")
+#     print(f"Original trial number : {selected.number}")
+#     print(f"Objective value       : {selected.value:.6f}")
+#     print("=" * 100)
 
-    print("\nHyperparameters:")
-    for k, v in selected.params.items():
-        print(f"{k}: {v}")
+#     print("\nHyperparameters:")
+#     for k, v in selected.params.items():
+#         print(f"{k}: {v}")
 
-    trial = DummyTrial(
-        selected.params,
-        number=selected.number,
-    )
+#     trial = DummyTrial(
+#         selected.params,
+#         number=selected.number,
+#     )
 
-    training(trial)
+#     training(trial)
 
-    run_athena(trial)
+#     run_athena(trial)
 
-    score = compare_simulation(trial, delete_folder=False)
+#     score = compare_simulation(trial, delete_folder=False)
 
-    print("=" * 100)
-    print("Finished re-running selected trial")
-    print(f"Objective score: {score:.6f}")
-    print("=" * 100)
+#     print("=" * 100)
+#     print("Finished re-running selected trial")
+#     print(f"Objective score: {score:.6f}")
+#     print("=" * 100)

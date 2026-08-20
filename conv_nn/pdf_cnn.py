@@ -17,8 +17,8 @@ import argparse
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--alpha_emiss", type=float, default=500.0)
-parser.add_argument("--alpha_profile", type=float, default=500.0)
+parser.add_argument("--alpha_emiss", type=float, default=1000.0)
+parser.add_argument("--alpha_profile", type=float, default=1000.0)
 parser.add_argument("--alpha_gate", type=float, default=5.0)
 parser.add_argument("--alpha_leak", type=float, default=10.0)
 parser.add_argument("--alpha_active_pdf", type=float, default=20.0)

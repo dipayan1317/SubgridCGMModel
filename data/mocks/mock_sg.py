@@ -22,10 +22,10 @@ rho0 = 1e-3
 p0 = 8.63359
 du = 31.0918
 
-ALL_FIELDS_ANIMATION = True
-CONS_FIELDS_ANIMATION = True
-TEMP_PDF_ANIMATION = True
-FOURIER_SPECTRUM_ANIMATION = True
+ALL_FIELDS_ANIMATION = False
+CONS_FIELDS_ANIMATION = False
+TEMP_PDF_ANIMATION = False
+FOURIER_SPECTRUM_ANIMATION = False
 
 def divergence(f, dx, dy):
     dFx_dx = np.gradient(f[0], dy, dx)[1]
@@ -90,8 +90,8 @@ def lambda_cool(temp, mask=True):
     return lam
 
 resolution = (16, 8)
-file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sg_build/src/pdf_trial_181/bin"
-save_path = f"mocks/sg/pdf_trial_181/"
+file_path = f"/ptmp/mpa/dipda/subgrid/SubgridCGMModel/AthenaK_legacy/sg_build/src/pdf_trial_63/bin"
+save_path = f"mocks/sg/pdf_trial_63/"
 os.makedirs(save_path, exist_ok=True)
 
 sim_data = simulation_data()
